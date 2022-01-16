@@ -2,6 +2,7 @@ import argparse
 import os
 from pyspark.sql import SparkSession
 from admin_boundaries_controller import get_admin_boundaries
+from geonames_controller import get_geonames_cities
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -21,4 +22,5 @@ if __name__ == '__main__':
         .getOrCreate() \
         .newSession()
 
+    get_geonames_cities(sp=spark)
     get_admin_boundaries(sp=spark, continent=continent, country=country, country_region=country_region)
