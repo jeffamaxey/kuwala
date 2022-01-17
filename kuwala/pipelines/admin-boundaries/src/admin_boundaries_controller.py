@@ -2,7 +2,7 @@ import json
 import logging
 import os
 from pyspark.sql.functions import col, concat_ws, lit, udf
-from pyspark.sql.types import IntegerType
+from pyspark.sql.types import IntegerType, StringType
 from shapely.geometry import shape
 
 
@@ -93,7 +93,7 @@ def get_admin_boundaries(sp, continent, country, country_region):
         .withColumn('kuwala_admin_level', get_kuwala_admin_level(col('osm_admin_level'))) \
         .withColumn('id', concat_ws('_', lit(continent), lit(country), col('kuwala_admin_level'), col('h3_index'))) \
         .sort(col('kuwala_admin_level').desc()) \
-        .withColumn('parent', lit(None)) \
+        .withColumn('parent', lit(None).cast(StringType())) \
         .toPandas()
     osm_admin_levels = osm_admin_levels.value
     admin_boundaries = build_hierarchy(admin_boundaries, osm_admin_levels)
