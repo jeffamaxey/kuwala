@@ -1,4 +1,10 @@
-SELECT abgc.ascii_name AS city_name, ab.name AS admin_boundary_name, min_levenshtein_distance, ab.geometry AS geometry
+SELECT
+    abgc.ascii_name AS city_name,
+    ab.name AS admin_boundary_name,
+    min_levenshtein_distance,
+    ab.geometry AS geometry,
+    abgc.latitude AS candidate_latitude,
+    abgc.longitude AS candidate_longitude
 FROM (
     SELECT id, geoname_id, levenshtein_distance
     FROM ({{ match_admin_boundaries_with_city_names(var('country')) }}) AS mabwcn

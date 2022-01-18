@@ -7,3 +7,4 @@ INNER JOIN (
 ) AS best_city_candidates ON
     city_candidates.city_name = best_city_candidates.city_name_best_match AND
     city_candidates.min_levenshtein_distance = best_city_candidates.min_levenshtein_distance_best_match
+WHERE st_contains(geometry, st_setsrid(st_makepoint(candidate_longitude, candidate_latitude), 4326))
