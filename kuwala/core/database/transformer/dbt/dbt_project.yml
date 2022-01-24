@@ -51,7 +51,13 @@ models:
     poi:
       poi:
         +materialized: table
+      poi_address_city:
+        +materialized: table
+      poi_address_country:
+        +materialized: table
       poi_aggregated:
+        +materialized: table
+      poi_matched:
         +materialized: table
       poi_popularity_time_series:
         +materialized: table
