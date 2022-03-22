@@ -50,9 +50,9 @@ export default () => {
     const dataIndex = location.state.index
     const {dataSource} = useStoreState((state) => state.canvas);
     const selectedSource = dataSource.filter((el) => el.id === dataIndex)[0];
-    const [schemaList, setSchema] = useState([])
     const [selectedTable, setSelectedTable] = useState(null)
     const [isTableDataPreviewLoading, setIsTableDataPreviewLoading] = useState(false)
+    const [schemaList, setSchema] = useState([])
     const [isSchemaLoading, setIsSchemaLoading] = useState(false)
     const [tableDataPreview, setTableDataPreview] = useState({
         columns: [],

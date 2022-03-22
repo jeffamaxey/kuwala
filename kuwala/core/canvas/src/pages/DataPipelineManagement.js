@@ -8,7 +8,7 @@ import AddSVG from '../icons/add_sources_green.png'
 export default () => {
     const navigate = useNavigate()
     const { dataSource } = useStoreState((state) => state.canvas)
-    const { getDataSources } = useStoreActions((actions) => actions.canvas)
+    const { getDataSources, addDataSourceToCanvas } = useStoreActions((actions) => actions.canvas)
 
     useEffect(()=> {
         getDataSources()
@@ -77,12 +77,26 @@ export default () => {
                                                 index: e.id,
                                             }}
                                             className={`
-                                        bg-white text-kuwala-green px-4 py-2 text-white rounded-md border-2 border-kuwala-green hover:bg-kuwala-bg-gray
-                                        ${e.connected ? '' : 'hidden'}
-                                    `}
+                                                bg-white text-kuwala-green px-4 py-2 rounded-md border-2 border-kuwala-green hover:bg-kuwala-bg-gray
+                                            ${e.connected ? '' : 'hidden'}
+                                        `}
                                         >
                                             <span className={'text-kuwala-green font-semibold'}>Preview Data</span>
                                         </Link>
+                                        <button
+                                            className={`
+                                                bg-kuwala-green text-white px-4 py-2 rounded
+                                                font-semibold
+                                                hover:bg-kuwala-light-green 
+                                            ${e.connected ? '' : 'hidden'}
+                                            `}
+                                            onClick={()=>{
+                                                console.log('Add to canvs')
+                                                addDataSourceToCanvas(e)
+                                            }}
+                                        >
+                                            Add to canvas
+                                        </button>
                                     </div>
                                 </td>
                             </tr>

@@ -12,14 +12,17 @@ import {useStoreActions, useStoreState} from 'easy-peasy';
 import DataSourceNode from "../components/Nodes/DataSourceNode";
 import TransformationNode from "../components/Nodes/TransformationNode";
 import VisualizationNode from "../components/Nodes/VisualizationNode";
+import PostgresDataSourceNode from "../components/Nodes/PostgresDataSourceNode";
 import {Link} from "react-router-dom";
+import NodeConfigModal from "../components/Modals/NodeConfigModal";
 
 export default function () {
     const reactFlowWrapper = useRef(null);
     const [reactFlowInstance, setReactFlowInstance] = useState(null);
 
     const {elements, selectedElement, newNodeInfo, dataSource} = useStoreState(state => state.canvas);
-    const {addNode, setSelectedElement, removeNode, connectNodes, setOpenDataView, getDataSources} = useStoreActions(actions => actions.canvas)
+    const {showConfigModal} = useStoreState(state => state.common);
+    const {addNode, setSelectedElement, removeNode, connectNodes, setOpenDataView, getDataSources} = useStoreActions(actions => actions.canvas);
 
     useEffect(()=> {
        if (dataSource.length <= 0) getDataSources()
@@ -59,6 +62,8 @@ export default function () {
                         onConnect={onConnect}
                         onElementsRemove={onElementsRemove}
                         onElementClick={(event, elements) => {
+                            console.log("ELEMENT CLICK")
+                            console.log(elements)
                             setOpenDataView(false)
                             setSelectedElement(elements)
                         }}
@@ -70,6 +75,7 @@ export default function () {
                             dataSource: DataSourceNode,
                             transformation: TransformationNode,
                             visualization: VisualizationNode,
+                            postgresDataSource: PostgresDataSourceNode,
                         }}
                         selectNodesOnDrag={false}
                         onLoad={onLoad}
@@ -86,7 +92,7 @@ export default function () {
                             }}
                         />
                     </ReactFlow>
-                    <DataView/>
+                    {/*<DataView/>*/}
                 </main>
             </ReactFlowProvider>
         } else {
@@ -107,11 +113,14 @@ export default function () {
         <div className={`flex flex-col h-screen overflow-y-hidden antialiased text-gray-900 bg-white`}>
             <div className='flex flex-col h-full w-full'>
                 <Header />
-                {/* MAIN CONTENT CONTAINER */}
                 <div className={'flex flex-row h-full w-full max-h-screen relative'}>
                     <Sidebar />
                     {renderFlow()}
                 </div>
+                <NodeConfigModal
+                    isShow={showConfigModal}
+                    configData={selectedElement}
+                />
             </div>
         </div>
     )

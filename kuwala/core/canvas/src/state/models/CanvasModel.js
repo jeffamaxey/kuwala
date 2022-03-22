@@ -13,6 +13,7 @@ const CanvasModel =  {
     dataSource: [],
     availableDataSource: [],
     selectedDataSource: [],
+    canvasSelectedDataSource: [],
 
     // Elements
     addNode: action((state, nodeInfo) => {
@@ -95,11 +96,25 @@ const CanvasModel =  {
             return;
         }
         const idList = selectedSource.map((el)=> el.id);
-        const response = await saveSelectedDataCatalogItems({
+        await saveSelectedDataCatalogItems({
             item_ids: idList
         });
         actions.getDataSources()
     }),
+
+    // Canvas Selected Data Source
+    addDataSourceToCanvas: action((state, selectedDataSource)=> {
+        // Check for possible duplicate
+        let isDuplicate = false;
+        state.canvasSelectedDataSource.map((el) => {
+            if (el.id === selectedDataSource.id) isDuplicate = true
+        });
+
+        if (!isDuplicate){
+            state.canvasSelectedDataSource = [...state.canvasSelectedDataSource, selectedDataSource]
+        }
+
+    })
 }
 
 export default CanvasModel;

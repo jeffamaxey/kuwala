@@ -44,7 +44,6 @@ export default () => {
                     <div className="inline-flex">
                         <input
                             type="radio"
-                            checked
                             hidden
                         />
                         <label htmlFor="roomPrivate"

@@ -6,36 +6,16 @@ import VisualizationHandler from "./NodeHandlers/VisualizationHandler";
 import {useStoreActions, useStoreState} from "easy-peasy";
 import {Link} from "react-router-dom";
 
+
 import AddSourcesGreen from "../../icons/add_sources_green.png";
+import NodeHandlerContainer from "./NodeHandlerContainer";
 
 export default () => {
-    const {addNode, setNewNodeInfo} = useStoreActions(actions => actions.canvas)
-    const {dataSource} = useStoreState(state => state.canvas)
-
-    const onDragStart = (event, newNodeInfo) => {
-        setNewNodeInfo(newNodeInfo)
-        event.dataTransfer.effectAllowed = 'move';
-    };
-
-    const onClickAddNode = (newNodeInfo) => {
-        addNode({
-            ...newNodeInfo,
-            position: {
-                x: -100,
-                y: Math.random() * window.innerHeight/2,
-            },
-        })
-    }
+    const { canvasSelectedDataSource } = useStoreState(state => state.canvas);
 
     const renderDataSources = () => {
-        if(dataSource.length > 0) {
-            return (
-                <>
-                    <DataSourceHandler onDragStart={onDragStart} onClickAddNode={onClickAddNode}/>
-                    <TransformationHandler onDragStart={onDragStart} onClickAddNode={onClickAddNode}/>
-                    <VisualizationHandler onDragStart={onDragStart} onClickAddNode={onClickAddNode}/>
-                </>
-            )
+        if(canvasSelectedDataSource.length > 0) {
+            return <NodeHandlerContainer/>
         }else {
             return (
                 <Link
@@ -82,7 +62,7 @@ export default () => {
                     }
                 >
                     {/* Header and Toggle */}
-                    <div className={`flex items-center justify-center flex-shrink-0 p-2 ${dataSource.length > 0 ? '' : 'hidden'}`}>
+                    <div className={`flex items-center justify-center flex-shrink-0 p-2 ${canvasSelectedDataSource.length > 0 ? '' : 'hidden'}`}>
                         <span className={`p-2 text-xl font-semibold tracking-wider whitespace-nowrap`}>
                             <span>Data Sources</span>
                         </span>
@@ -97,7 +77,7 @@ export default () => {
 
             <div className={`
                 relative
-                ${dataSource.length > 0 ? '' : 'hidden'}
+                ${canvasSelectedDataSource.length > 0 ? '' : 'hidden'}
             `}>
                 <button
                     to={'/data-catalog'}
