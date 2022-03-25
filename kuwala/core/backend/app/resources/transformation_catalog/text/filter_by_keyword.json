@@ -1,0 +1,74 @@
+{
+  "id": "filter_by_keyword",
+  "category": "text",
+  "name": "Filter by keyword",
+  "icon": "filter",
+  "description": "With this transformation, you can filter a table based on a column that should be equal to a given keyword.",
+  "required_column_types": ["text"],
+  "optional_column_types": [],
+  "macro_parameters": [
+    {
+      "id": "column",
+      "name": "Column",
+      "type": "text"
+    },
+    {
+      "id": "keyword",
+      "name": "Keyword",
+      "type": "text"
+    }
+  ],
+  "example_before": {
+    "columns": [
+      "order_number",
+      "order_value",
+      "address_country"
+    ],
+    "rows": [
+      [
+        "63472",
+        "39.99",
+        "DE"
+      ],
+      [
+        "63473",
+        "74.97",
+        "DE"
+      ],
+      [
+        "63474",
+        "99.99",
+        "US"
+      ],
+      [
+        "63475",
+        "9.99",
+        "DE"
+      ]
+    ]
+  },
+  "example_after": {
+    "columns": [
+      "order_number",
+      "order_value",
+      "address_country"
+    ],
+    "rows": [
+      [
+        "63472",
+        "39.99",
+        "DE"
+      ],
+      [
+        "63473",
+        "74.97",
+        "DE"
+      ],
+      [
+        "63475",
+        "9.99",
+        "DE"
+      ]
+    ]
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "id": "contains_keyword",
+  "category": "text",
+  "name": "Contains keyword",
+  "icon": "filter",
+  "description": "With this transformation, you can filter a table based on a column that should contain a given keyword.",
+  "required_column_types": ["text"],
+  "optional_column_types": [],
+  "macro_parameters": [
+    {
+      "id": "column",
+      "name": "Column",
+      "type": "text"
+    },
+    {
+      "id": "keyword",
+      "name": "Keyword",
+      "type": "text"
+    }
+  ],
+  "example_before": {
+    "columns": [
+      "first_name",
+      "last_name",
+      "position"
+    ],
+    "rows": [
+      [
+        "John",
+        "Doe",
+        "Frontend engineer"
+      ],
+      [
+        "Laura",
+        "Santos",
+        "Backend engineer"
+      ],
+      [
+        "Marc",
+        "Johnson",
+        "Accountant"
+      ],
+      [
+        "Luisa",
+        "Jacobs",
+        "UX designer"
+      ]
+    ]
+  },
+  "example_after": {
+    "columns": [
+      "first_name",
+      "last_name",
+      "position"
+    ],
+    "rows": [
+      [
+        "John",
+        "Doe",
+        "Frontend engineer"
+      ],
+      [
+        "Laura",
+        "Santos",
+        "Backend engineer"
+      ]
+    ]
+  }
+}
