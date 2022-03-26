@@ -62,8 +62,6 @@ export default function () {
                         onConnect={onConnect}
                         onElementsRemove={onElementsRemove}
                         onElementClick={(event, elements) => {
-                            console.log("ELEMENT CLICK")
-                            console.log(elements)
                             setOpenDataView(false)
                             setSelectedElement(elements)
                         }}

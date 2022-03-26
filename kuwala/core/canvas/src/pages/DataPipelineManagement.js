@@ -66,7 +66,7 @@ export default () => {
                                             state={{
                                                 index: e.id,
                                             }}
-                                            className={'bg-white px-4 py-2 text-white rounded-md border-2 border-kuwala-green hover:bg-kuwala-bg-gray'}
+                                            className={'flex bg-white px-4 py-2 text-white rounded-md border-2 border-kuwala-green hover:bg-kuwala-bg-gray items-center '}
                                         >
                                             <span className={'text-kuwala-green font-semibold'}>Configure</span>
                                         </Link>

@@ -165,21 +165,21 @@ export default ({isShow, configData}) => {
             <div className={'flex flex-row '}>
                 <div
                     className={`
-                              border-b-2 border-t-2 border-l-2 border-kuwala-green
-                              flex
-                              items-center
-                              justify-center
-                              block
-                              text-xs
-                              leading-tight
-                              rounded-l-lg
-                              w-24
-                              py-2
-                              focus:outline-none focus:ring-0
-                              cursor-pointer
-                              font-bold
-                              ${selectorDisplay === SELECTION_DISPLAY ? 'bg-kuwala-green text-white' : 'bg-white text-kuwala-green'}
-                          `}
+                          border-b-2 border-t-2 border-l-2 border-kuwala-green
+                          flex
+                          items-center
+                          justify-center
+                          block
+                          text-xs
+                          leading-tight
+                          rounded-l-lg
+                          w-24
+                          py-2
+                          focus:outline-none focus:ring-0
+                          cursor-pointer
+                          font-bold
+                          ${selectorDisplay === SELECTION_DISPLAY ? 'bg-kuwala-green text-white' : 'bg-white text-kuwala-green'}
+                      `}
                     onClick={()=>{
                         setSelectorDisplay(SELECTION_DISPLAY)
                     }}

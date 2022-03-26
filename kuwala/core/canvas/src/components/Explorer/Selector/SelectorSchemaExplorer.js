@@ -26,7 +26,7 @@ export default (
             return {
                 ...el,
                 selected: false,
-                columnAddress: `${addressString}_${el.column}`
+                columnAddress: `${addressString}@${el.column}`
             }
         });
     }
@@ -54,6 +54,7 @@ export default (
                                 flex flex-row justify-center items-center h-6 w-6 rounded-full
                                 border-2 border-kuwala-green 
                                 cursor-pointer
+                                select-none
                             `}
                             onClick={()=> {
                                 insertOrRemoveSelectedColumnAddress(row.original.columnAddress)
@@ -76,7 +77,7 @@ export default (
                 Header: 'name',
                 accessor: 'column',
                 Cell: (row) => {
-                    return <div className={'font-light'}>
+                    return <div className={'font-light select-none'}>
                         {row.value}
                     </div>
                 }
@@ -217,7 +218,6 @@ export default (
                 onClick={()=>{
                     tableSelectorOnclick({
                         addressString: tableKey,
-
                     })
                 }}
             >
