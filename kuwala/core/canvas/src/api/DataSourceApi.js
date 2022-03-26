@@ -28,6 +28,13 @@ export function getSchema(id) {
     )
 }
 
+export function getColumns({id, params}){
+    return baseAxios.get(
+        `${DATA_SOURCE}/${id}/table/columns`,
+        {params}
+    )
+}
+
 export function getTablePreview({id, params}){
     return baseAxios.get(
         `${DATA_SOURCE}/${id}/table/preview`,

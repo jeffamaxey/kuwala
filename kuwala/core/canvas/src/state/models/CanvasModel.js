@@ -14,6 +14,7 @@ const CanvasModel =  {
     availableDataSource: [],
     selectedDataSource: [],
     canvasSelectedDataSource: [],
+    selectedColumnAddress: [],
 
     // Elements
     addNode: action((state, nodeInfo) => {
@@ -103,7 +104,7 @@ const CanvasModel =  {
     }),
 
     // Canvas Selected Data Source
-    addDataSourceToCanvas: action((state, selectedDataSource)=> {
+    addDataSourceToCanvas: action((state, selectedDataSource) => {
         // Check for possible duplicate
         let isDuplicate = false;
         state.canvasSelectedDataSource.map((el) => {
@@ -114,7 +115,36 @@ const CanvasModel =  {
             state.canvasSelectedDataSource = [...state.canvasSelectedDataSource, selectedDataSource]
         }
 
-    })
+    }),
+
+    // Selected Column Address Action
+    addSelectedColumnAddress: action((state, newAddress) => {
+        let isDuplicate = false;
+        state.selectedColumnAddress.forEach((el) => {
+            if (el === newAddress) isDuplicate = true
+        });
+
+        if (!isDuplicate){
+            console.log(`PUSHING NEW SELECTED ADDRESS: ${newAddress}`)
+            state.selectedColumnAddress = [...state.selectedColumnAddress, newAddress]
+            console.log(state.selectedColumnAddress)
+        }
+    }),
+
+    removeSelectedColumnAddress: action((state, addressToRemove) => {
+        state.selectedColumnAddress = state.selectedColumnAddress.filter((el) => el !== addressToRemove);
+    }),
+
+    insertOrRemoveSelectedColumnAddress: thunk(async (actions, params, {getState}) => {
+        const selectedColumnAddress = getState().selectedColumnAddress;
+        console.log(`INSERT OR REMOVE PARAMS : ${params}`)
+
+        if(selectedColumnAddress.includes(params)){
+            actions.removeSelectedColumnAddress(params);
+        }else {
+            actions.addSelectedColumnAddress(params);
+        }
+    }),
 }
 
 export default CanvasModel;

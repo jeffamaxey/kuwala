@@ -1,10 +1,10 @@
-import ArrowDown from "../../icons/arrow-down-solid.svg";
-import ArrowRight from "../../icons/arrow-right-solid.svg";
-import ListSVG from "../../icons/list.svg";
-import FolderSVG from "../../icons/folder-solid.svg";
-import TableSVG from "../../icons/table-solid.svg";
+import ArrowDown from "../../../icons/arrow-down-solid.svg";
+import ArrowRight from "../../../icons/arrow-right-solid.svg";
+import ListSVG from "../../../icons/list.svg";
+import FolderSVG from "../../../icons/folder-solid.svg";
+import TableSVG from "../../../icons/table-solid.svg";
 import React from "react";
-import {tableSelectionOnClick} from "../../utils/TablePreviewUtils";
+import {tableSelectionOnClick} from "../../../utils/TablePreviewUtils";
 import {useStoreState} from "easy-peasy";
 
 export default ({selectedTable, setSelectedTable, isSchemaLoading, schemaList, setSchema, setIsTableDataPreviewLoading, setTableDataPreview}) => {

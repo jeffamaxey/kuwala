@@ -1,19 +1,30 @@
 import React, {useEffect, useState} from "react";
 import {useStoreActions, useStoreState} from "easy-peasy";
-import {getSchema, getTablePreview} from "../../api/DataSourceApi";
+import {getSchema} from "../../api/DataSourceApi";
 import {populateSchema} from '../../utils/SchemaUtils';
-import SchemaExplorer from '../TableExplorer/SchemaExplorer'
-import PreviewExplorer from "../TableExplorer/PreviewExplorer";
-
+import SchemaExplorer from '../Explorer/Preview/SchemaExplorer'
+import PreviewExplorer from "../Explorer/Preview/PreviewExplorer";
+import SelectorExplorer from "../Explorer/Selector/SelectorExplorer";
+import SelectorSchemaExplorer from "../Explorer/Selector/SelectorSchemaExplorer";
 
 export default ({isShow, configData}) => {
+    const SELECTION_DISPLAY = 'selection';
+    const PREVIEW_DISPLAY = 'preview';
+
     const {toggleConfigModal} = useStoreActions(actions => actions.common);
     const {selectedElement} = useStoreState(state => state.canvas);
     const [schemaList, setSchema] = useState([])
     const [isSchemaLoading, setIsSchemaLoading] = useState(false);
     const [selectedTable, setSelectedTable] = useState(null);
     const [isTableDataPreviewLoading, setIsTableDataPreviewLoading] = useState(false);
+    const [isColumnsDataPreviewLoading, setIsColumnsDataPreviewLoading] = useState(false);
+    const [selectorDisplay, setSelectorDisplay] = useState(SELECTION_DISPLAY);
+    const [selectedColumnAddress, setSelectedColumnAddress] = useState([]);
     const [tableDataPreview, setTableDataPreview] = useState({
+        columns: [],
+        rows: []
+    });
+    const [columnsPreview, setColumnsPreview] = useState({
         columns: [],
         rows: []
     });
@@ -71,7 +82,7 @@ export default ({isShow, configData}) => {
                                 className={`
                                     form-control
                                     block
-                                    w-full
+                                    w-full                                   
                                     ml-2
                                     px-2
                                     py-0.5
@@ -105,24 +116,122 @@ export default ({isShow, configData}) => {
             return (
                 <div className={'flex flex-row bg-white border-2 border-kuwala-green rounded-t-lg h-full w-full'}>
                     <div className={'flex flex-col bg-white w-3/12 border border-kuwala-green h-full'}>
-                        <SchemaExplorer
-                            isSchemaLoading={isSchemaLoading}
-                            schemaList={schemaList}
-                            selectedTable={selectedTable}
-                            setSchema={setSchema}
-                            setIsTableDataPreviewLoading={setIsTableDataPreviewLoading}
-                            setSelectedTable={setSelectedTable}
-                            setTableDataPreview={setTableDataPreview}
-                        />
+                        {renderSchemaExplorer(selectorDisplay)}
                     </div>
                     <div className={'flex flex-col bg-white w-9/12 rounded-tr-lg'}>
-                        <PreviewExplorer
-                            selectedTable={selectedTable}
-                            isTableDataPreviewLoading={isTableDataPreviewLoading}
-                            tableDataPreview={tableDataPreview}
-                        />
+                        <div className={'flex flex-col w-full h-full'}>
+                            {renderDisplaySelector()}
+                            {renderDisplayType(selectorDisplay)}
+                        </div>
                     </div>
                 </div>
+            )
+        }
+    }
+
+    const renderSchemaExplorer = (displayType) => {
+        if(displayType === SELECTION_DISPLAY) {
+            return (
+                <SelectorSchemaExplorer
+                    isSchemaLoading={isSchemaLoading}
+                    schemaList={schemaList}
+                    selectedTable={selectedTable}
+                    setSchema={setSchema}
+                    setSelectedTable={setSelectedTable}
+
+                    columnsPreview={columnsPreview}
+                    setColumnsPreview={setColumnsPreview}
+                    setIsColumnsDataPreviewLoading={setIsColumnsDataPreviewLoading}
+                />
+            )
+        } else if (displayType === PREVIEW_DISPLAY) {
+            return (
+                <SchemaExplorer
+                    isSchemaLoading={isSchemaLoading}
+                    schemaList={schemaList}
+                    selectedTable={selectedTable}
+                    setSchema={setSchema}
+                    setSelectedTable={setSelectedTable}
+
+                    setTableDataPreview={setTableDataPreview}
+                    setIsTableDataPreviewLoading={setIsTableDataPreviewLoading}
+                />
+            )
+        }
+    }
+
+    const renderDisplaySelector = () => {
+        return <div className={'flex flex-row justify-center items-center p-8'}>
+            <div className={'flex flex-row '}>
+                <div
+                    className={`
+                              border-b-2 border-t-2 border-l-2 border-kuwala-green
+                              flex
+                              items-center
+                              justify-center
+                              block
+                              text-xs
+                              leading-tight
+                              rounded-l-lg
+                              w-24
+                              py-2
+                              focus:outline-none focus:ring-0
+                              cursor-pointer
+                              font-bold
+                              ${selectorDisplay === SELECTION_DISPLAY ? 'bg-kuwala-green text-white' : 'bg-white text-kuwala-green'}
+                          `}
+                    onClick={()=>{
+                        setSelectorDisplay(SELECTION_DISPLAY)
+                    }}
+                    draggable={false}>
+                    Selection
+                </div>
+                <div
+                    className={`
+                                  border-b-2 border-t-2 border-r-2 border-kuwala-green
+                                  flex
+                                  items-center
+                                  justify-center
+                                  block
+                                  text-xs
+                                  leading-tight
+                                  rounded-r-lg
+                                  w-24
+                                  py-2
+                                  focus:outline-none focus:ring-0
+                                  cursor-pointer
+                                  font-bold
+                              ${selectorDisplay === PREVIEW_DISPLAY ? 'bg-kuwala-green text-white' : 'bg-white text-kuwala-green'}
+                          `}
+                    onClick={()=>{
+                        setSelectorDisplay(PREVIEW_DISPLAY)
+                    }}
+                    draggable={false}>
+                    Preview
+                </div>
+            </div>
+        </div>
+    }
+
+    const renderDisplayType = (displayType) => {
+        if(displayType === SELECTION_DISPLAY) {
+            return (
+                <SelectorExplorer
+                    selectedTable={selectedTable}
+                    isColumnsDataPreviewLoading={isColumnsDataPreviewLoading}
+                    columnsPreview={columnsPreview}
+                    setSelectedColumnAddress={setSelectedColumnAddress}
+                    selectedColumnAddress={selectedColumnAddress}
+                />
+            )
+        } else if (displayType === PREVIEW_DISPLAY) {
+            return (
+                <PreviewExplorer
+                    selectedTable={selectedTable}
+                    isTableDataPreviewLoading={isTableDataPreviewLoading}
+                    tableDataPreview={tableDataPreview}
+                    selectedColumnAddress={selectedColumnAddress}
+                />
             )
         }
     }
@@ -162,10 +271,6 @@ export default ({isShow, configData}) => {
                             aria-label="Close"
                             onClick={()=> {
                                 toggleConfigModal()
-                                setTableDataPreview({
-                                    columns: [],
-                                    rows: []
-                                })
                                 setSelectedTable(null)
                             }}
                         />
