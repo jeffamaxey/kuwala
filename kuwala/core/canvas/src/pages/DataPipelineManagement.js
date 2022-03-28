@@ -9,33 +9,40 @@ import {createNewDataBlock} from "../api/DataBlockApi"
 export default () => {
     const navigate = useNavigate();
     const { dataSource } = useStoreState((state) => state.canvas);
-    const { getDataSources, addDataSourceToCanvas } = useStoreActions((actions) => actions.canvas);
+    const { getDataSources, addDataSourceToCanvas, addUnConfiguredDataBlocks } = useStoreActions((actions) => actions.canvas);
+    const [ isAddToCanvasLoading, setIsAddToCanvasLoading ] = useState(false)
 
     useEffect(()=> {
         getDataSources()
     }, []);
 
-    const addDataBlocks = async (dataSource) => {
-        console.log(dataSource);
+    const addToCanvas = async (selectedSource) => {
+        if(!selectedSource) return
+        setIsAddToCanvasLoading(true);
 
-        console.log({
-            data_source_id: dataSource.id,
-            name: `${dataSource.name}_`,
-            table_name: "",
-            schema_name: "",
-            dataset_name: "",
-            columns: []
-        })
+        const unConfiguredBlockPayload = {
+            data_source_id: selectedSource.id,
+            name: `${selectedSource.data_catalog_item_id}`,
+            columns: [],
+            catalogItem: selectedSource.data_catalog_item_id
+        }
 
-        // const res = await createNewDataBlock({
-        //     data_source_id: dataSource.id,
-        //     name: `${dataSource.name}_`,
-        //     table_name: "",
-        //     schema_name: "",
-        //     dataset_name: "",
-        //     columns: []
-        // });
-        // console.log(res);
+        switch (selectedSource.data_catalog_item_id) {
+            case("bigquery"):
+                unConfiguredBlockPayload.dataset_name = null
+                unConfiguredBlockPayload.table_name = null
+                break;
+            case("postgres"):
+                unConfiguredBlockPayload.schema_name = null
+                unConfiguredBlockPayload.table_name = null
+                break;
+            default:
+                return;
+        }
+
+        addUnConfiguredDataBlocks(unConfiguredBlockPayload);
+        alert('Added new un configured data blocks');
+        setIsAddToCanvasLoading(false);
     }
 
     const renderPipelineManager = () => {
@@ -112,14 +119,27 @@ export default () => {
                                                 bg-kuwala-green text-white px-4 py-2 rounded
                                                 font-semibold
                                                 hover:bg-kuwala-light-green 
-                                            ${e.connected ? '' : 'hidden'}
+                                                ${e.connected ? '' : 'hidden'}
                                             `}
+                                            disabled={isAddToCanvasLoading}
                                             onClick={async ()=>{
                                                 addDataSourceToCanvas(e)
-                                                await addDataBlocks(e)
+                                                await addToCanvas(e)
                                             }}
                                         >
-                                            Add to canvas
+                                            <span className={'text-white w-full py-2'}>
+                                                {isAddToCanvasLoading ?
+                                                    <div className="flex justify-center items-center">
+                                                        <div
+                                                            className="spinner-border animate-spin inline-block w-6 h-6 border-4 rounded-full"
+                                                            role="status">
+                                                            <span className="visually-hidden">Loading...</span>
+                                                        </div>
+                                                    </div>
+                                                    :
+                                                    'Add to canvas'
+                                                }
+                                            </span>
                                         </button>
                                     </div>
                                 </td>

@@ -16,6 +16,8 @@ const CanvasModel =  {
     canvasSelectedDataSource: [],
     selectedColumnAddress: [],
     selectedAddressObj: {},
+    unConfiguredDataBlocks: [],
+    dataBlocks: [],
 
     // Elements
     addNode: action((state, nodeInfo) => {
@@ -213,6 +215,11 @@ const CanvasModel =  {
             actions.addSelectedColumnAddress(params);
         }
 
+    }),
+
+    // Data Blocks
+    addUnConfiguredDataBlocks: action((state, newDataBlocks)=>{
+        state.unConfiguredDataBlocks = [...state.unConfiguredDataBlocks, newDataBlocks]
     }),
 }
 
