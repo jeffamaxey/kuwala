@@ -3,16 +3,40 @@ import Header from "../components/Header";
 import {useNavigate, Link} from "react-router-dom";
 import {useStoreActions, useStoreState} from "easy-peasy";
 import "./styles/data-pipeline-management.style.css";
-import AddSVG from '../icons/add_sources_green.png'
+import AddSVG from '../icons/add_sources_green.png';
+import {createNewDataBlock} from "../api/DataBlockApi"
 
 export default () => {
-    const navigate = useNavigate()
-    const { dataSource } = useStoreState((state) => state.canvas)
-    const { getDataSources, addDataSourceToCanvas } = useStoreActions((actions) => actions.canvas)
+    const navigate = useNavigate();
+    const { dataSource } = useStoreState((state) => state.canvas);
+    const { getDataSources, addDataSourceToCanvas } = useStoreActions((actions) => actions.canvas);
 
     useEffect(()=> {
         getDataSources()
-    }, [])
+    }, []);
+
+    const addDataBlocks = async (dataSource) => {
+        console.log(dataSource);
+
+        console.log({
+            data_source_id: dataSource.id,
+            name: `${dataSource.name}_`,
+            table_name: "",
+            schema_name: "",
+            dataset_name: "",
+            columns: []
+        })
+
+        // const res = await createNewDataBlock({
+        //     data_source_id: dataSource.id,
+        //     name: `${dataSource.name}_`,
+        //     table_name: "",
+        //     schema_name: "",
+        //     dataset_name: "",
+        //     columns: []
+        // });
+        // console.log(res);
+    }
 
     const renderPipelineManager = () => {
         if(dataSource.length <= 0) {
@@ -90,9 +114,9 @@ export default () => {
                                                 hover:bg-kuwala-light-green 
                                             ${e.connected ? '' : 'hidden'}
                                             `}
-                                            onClick={()=>{
-                                                console.log('Add to canvs')
+                                            onClick={async ()=>{
                                                 addDataSourceToCanvas(e)
+                                                await addDataBlocks(e)
                                             }}
                                         >
                                             Add to canvas

@@ -2,7 +2,7 @@ import {getTablePreview} from "../api/DataSourceApi";
 import React from "react";
 import {generateParamsByDataSourceType, getDataDictionary} from "./SchemaUtils";
 
-export const tableSelectionOnClick = async ({addressString, setSelectedTable, setIsTableDataPreviewLoading, dataCatalogItemId, dataIndex, setTableDataPreview}) => {
+export const tableSelectionOnClick = async ({addressString, setSelectedTable, setIsTableDataPreviewLoading, dataCatalogItemId, dataIndex, setTableDataPreview, selectedAddressObj}) => {
     setSelectedTable(addressString)
     setIsTableDataPreviewLoading(true)
     const params = generateParamsByDataSourceType(dataCatalogItemId, addressString)
