@@ -1,8 +1,6 @@
 import React from "react";
 
 export const populateAPIResult = ({res, setColumnsPreview, addressString, insertOrRemoveSelectedColumnAddress}) => {
-    console.log('Populating APi result')
-    console.log(addressString)
     const cols = [{
         Header: "",
         id: "row",
@@ -68,4 +66,14 @@ const prePopulate = (raw, addressString) => {
             columnAddress: `${addressString}@${el.column}`
         }
     });
+}
+
+export const columnAddressSplitter = (columnAddress) => {
+    const addressArray = columnAddress.split('@');
+    return {
+        schema: addressArray[0] || null,
+        category: addressArray[1] || null,
+        table: addressArray[2] || null,
+        column: addressArray[3] || null,
+    }
 }

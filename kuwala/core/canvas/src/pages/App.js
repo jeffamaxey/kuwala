@@ -23,56 +23,55 @@ export default function () {
     const {elements, selectedElement, newNodeInfo, dataSource, dataBlocks} = useStoreState(state => state.canvas);
     const {showConfigModal} = useStoreState(state => state.common);
     const {
-        addNode, setSelectedElement, removeNode, connectNodes, setOpenDataView, getDataSources
+        addNode, setSelectedElement, removeNode, connectNodes, setOpenDataView, getDataSources,
+        convertDataBlocksIntoElement
     } = useStoreActions(actions => actions.canvas);
 
     useEffect(()=> {
         if (dataSource.length <= 0) getDataSources()
-        if (dataBlocks.length > 0) convertDataBlocksIntoNodeElement()
+        if (dataBlocks.length > 0) convertDataBlocksIntoElement()
     }, [])
 
-    const convertDataBlocksIntoNodeElement = () => {
-        dataBlocks.forEach((el, i) => {
-            const {dataSource, ...dataBlocks} = el;
-            let dupeFlag = false;
-
-            // Check if Data blocks already converted into node
-            elements.forEach((curEl) => {
-               if(curEl.data.dataBlocks.dataBlockId === dataBlocks.dataBlockId) dupeFlag = true;
-            });
-
-            if(dupeFlag) return;
-
-            const nodeInfo = {
-                type: getNodeTypeByDataCatalogId(el.catalogItemType),
-                data: {
-                    label: 'Postgres',
-                    dataSource: dataSource,
-                    dataBlocks: dataBlocks,
-                },
-                sourcePosition: 'right',
-                targetPosition: 'left',
-            }
-
-            addNode({
-                ...nodeInfo,
-                position: {
-                    x: -100,
-                    y: Math.random() * window.innerHeight/2,
-                },
-            })
-        });
-    }
-
-    const getNodeTypeByDataCatalogId = (catalogId) => {
-        switch (catalogId){
-            case('postgres'):
-                return 'postgresDataSource'
-            default:
-                return 'transformation'
-        }
-
-    }
+  //   const convertDataBlocksIntoNodeElement = ({
+  //         dataBlocks,
+  //         addNode,
+  //         updateNodePayloadByDataBlocks,
+  // }) => {
+  //       dataBlocks.forEach((el, i) => {
+  //           const {dataSource, ...dataBlocks} = el;
+  //           let dupeFlag = false;
+  //
+  //           // Check if Data blocks already converted into node
+  //           elements.forEach((curEl) => {
+  //              if(curEl.data.dataBlocks.dataBlockId === dataBlocks.dataBlockId) dupeFlag = true;
+  //           });
+  //
+  //           const nodeInfo = {
+  //               type: getNodeTypeByDataCatalogId(el.catalogItemType),
+  //               data: {
+  //                   label: 'Postgres',
+  //                   dataSource: dataSource,
+  //                   dataBlocks: dataBlocks,
+  //               },
+  //               sourcePosition: 'right',
+  //               targetPosition: 'left',
+  //           }
+  //
+  //           if(dupeFlag) {
+  //               // If node same node exists -> Update the node info
+  //               updateNodePayloadByDataBlocks({updatedNodeInfo: nodeInfo, dataBlockId: dataBlocks.dataBlockId})
+  //           }else {
+  //               // Else add new node
+  //               addNode({
+  //                   ...nodeInfo,
+  //                   position: {
+  //                       x: -100,
+  //                       y: Math.random() * window.innerHeight/2,
+  //                   },
+  //               })
+  //           }
+  //       });
+  //   }
 
     const onConnect = (params) => connectNodes(params)
     const onElementsRemove = (elementsToRemove) => removeNode(elementsToRemove)

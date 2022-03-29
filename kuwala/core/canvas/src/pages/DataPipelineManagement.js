@@ -27,7 +27,9 @@ export default () => {
             columns: [],
             catalogItemType : selectedSource.data_catalog_item_id,
             dataSource: selectedSource,
-            dataBlockId: v4(),
+            dataBlockId: v4(), // Used to track nodes & table selection
+            dataBlockEntityId: null, // This will be filled with entity id from database
+            isConfigured: false,
         }
 
         switch (selectedSource.data_catalog_item_id) {

@@ -8,21 +8,24 @@ import SelectorExplorer from "../Explorer/Selector/SelectorExplorer";
 import SelectorSchemaExplorer from "../Explorer/Selector/SelectorSchemaExplorer";
 import "./node-config-modal.css"
 import {generateParamsByDataSourceType, preCreateSchemaExplorer} from '../../utils/SchemaUtils'
-import {populateAPIResult} from "../../utils/TableSelectorUtils";
+import {populateAPIResult, columnAddressSplitter} from "../../utils/TableSelectorUtils";
+import {createNewDataBlock, updateDataBlockEntity} from "../../api/DataBlockApi";
 
 export default ({isShow, configData}) => {
     const SELECTION_DISPLAY = 'selection';
     const PREVIEW_DISPLAY = 'preview';
-    const { insertOrRemoveSelectedColumnAddress, selectAllColumnAddresses} = useStoreActions(actions => actions.canvas);
+    const {
+        insertOrRemoveSelectedColumnAddress, selectAllColumnAddresses,
+        updateDataBlock
+    } = useStoreActions(actions => actions.canvas);
     const {toggleConfigModal} = useStoreActions(actions => actions.common);
-    const {selectedElement} = useStoreState(state => state.canvas);
+    const {selectedElement, selectedAddressObj} = useStoreState(state => state.canvas);
     const [schemaList, setSchema] = useState([])
     const [isSchemaLoading, setIsSchemaLoading] = useState(false);
     const [selectedTable, setSelectedTable] = useState(null);
     const [isTableDataPreviewLoading, setIsTableDataPreviewLoading] = useState(false);
     const [isColumnsDataPreviewLoading, setIsColumnsDataPreviewLoading] = useState(false);
     const [selectorDisplay, setSelectorDisplay] = useState(SELECTION_DISPLAY);
-    const [selectedColumnAddress, setSelectedColumnAddress] = useState([]);
     const [tableDataPreview, setTableDataPreview] = useState({
         columns: [],
         rows: []
@@ -36,6 +39,92 @@ export default ({isShow, configData}) => {
         fetchSchema().then(null)
         populateConfigByDataBlocks().then(null)
     }, [selectedElement])
+
+    const upsertDataBlocks = async () => {
+        if(selectedElement){
+            if(selectedElement.data.dataBlocks) {
+                const blocks = selectedElement.data.dataBlocks;
+                const selectedSource = selectedElement.data.dataSource;
+                const {schema, category, table} = columnAddressSplitter(selectedTable);
+                const newSelectedColumns = getSelectedColumnsOfCurrentTable();
+                // Insert new data blocks
+                if(blocks.dataBlockEntityId === null) {
+                    const insertPayload = {
+                        data_source_id: selectedSource.id,
+                        name: `${blocks.catalogItemType}_${table}`,
+                        columns: newSelectedColumns,
+                    }
+
+                    switch (selectedSource.data_catalog_item_id) {
+                        case("bigquery"):
+                            insertPayload.dataset_name = category
+                            insertPayload.table_name = table
+                            break;
+                        case("postgres"):
+                            insertPayload.schema_name = schema
+                            insertPayload.table_name = table
+                            break;
+                        default:
+                            return;
+                    }
+
+                    const res = await createNewDataBlock(insertPayload);
+
+                    if(res.status === 200) {
+                        const configuredDataBlock = {
+                            ...insertPayload,
+                            ...blocks,
+                            data_source_id: selectedSource.id,
+                            name: `${blocks.catalogItemType}_${table}`,
+                            columns: newSelectedColumns,
+                            dataBlockEntityId: res.data.id,
+                            isConfigured: true,
+                            dataSource: selectedSource,
+                        }
+                        updateDataBlock(configuredDataBlock);
+                        alert('Successfully created a configured data blocks');
+                    } else {
+                        alert('Failed to create a new blocks')
+                    }
+
+                } else {
+                    // Update blocks
+                    const updatePayload = {
+                        id: blocks.dataBlockEntityId,
+                        name: `${blocks.catalogItemType}_${table}`,
+                        columns: newSelectedColumns,
+                        table_name: table,
+                        schema_name: schema,
+                    }
+                    const res = await updateDataBlockEntity(updatePayload);
+                    if(res.status === 200) {
+                        const configuredDataBlock = {
+                            ...updatePayload,
+                            ...blocks,
+                            data_source_id: selectedSource.id,
+                            name: `${blocks.catalogItemType}_${table}`,
+                            columns: newSelectedColumns,
+                            isConfigured: true,
+                            dataSource: selectedSource,
+                        }
+                        updateDataBlock(configuredDataBlock);
+                        alert('Successfully created a configured data blocks');
+                    } else {
+                        alert('Failed to create a new blocks')
+                    }
+                }
+            }
+        }
+    }
+
+    const getSelectedColumnsOfCurrentTable = () => {
+        const  {schema, table, category} = columnAddressSplitter(selectedTable)
+        try {
+            return selectedAddressObj[schema][category][table]
+        } catch (e) {
+            return []
+        }
+    }
 
     const populateConfigByDataBlocks = async () => {
         if(selectedElement){
@@ -124,7 +213,7 @@ export default ({isShow, configData}) => {
                         <div className={'flex flex-row items-center'}>
                             <label className={'font-semibold'}>Name:</label>
                             <input
-                                type="text" name="name" value={'Postgres'} disabled={true}
+                                type="text" name="name" value={`${selectedElement.data.dataBlocks.name}`} disabled={true}
                                 className={`
                                     form-control
                                     block
@@ -266,8 +355,6 @@ export default ({isShow, configData}) => {
                     selectedTable={selectedTable}
                     isColumnsDataPreviewLoading={isColumnsDataPreviewLoading}
                     columnsPreview={columnsPreview}
-                    setSelectedColumnAddress={setSelectedColumnAddress}
-                    selectedColumnAddress={selectedColumnAddress}
                 />
             )
         } else if (displayType === PREVIEW_DISPLAY) {
@@ -276,7 +363,6 @@ export default ({isShow, configData}) => {
                     selectedTable={selectedTable}
                     isTableDataPreviewLoading={isTableDataPreviewLoading}
                     tableDataPreview={tableDataPreview}
-                    selectedColumnAddress={selectedColumnAddress}
                 />
             )
         }
@@ -326,8 +412,29 @@ export default ({isShow, configData}) => {
                             {renderSelectedSourceHeader()}
                         </div>
                     </div>
-                    <div className="flex modal-body overflow-y-scroll relative px-6 pt-2 pb-6">
+                    <div className="flex flex-col modal-body overflow-y-scroll relative px-6 pt-2 pb-4">
                         {renderTableSelector()}
+                    </div>
+
+                    <div className={'flex flex-row justify-between px-6 pb-4'}>
+                        <div className={'flex flex-row items-center'}>
+                                <span
+                                    className={`
+                                        bg-kuwala-green px-6 py-2 font-semibold text-white rounded-lg cursor-pointer
+                                    `}
+                                    onClick={toggleConfigModal}
+                                >Back</span>
+                        </div>
+                        <div className={'flex flex-row items-center'}>
+                                <span
+                                    className={`
+                                        bg-kuwala-green px-6 py-2 font-semibold text-white rounded-lg cursor-pointer
+                                    `}
+                                    onClick={async () => {
+                                        await upsertDataBlocks()
+                                    }}
+                                >Save</span>
+                        </div>
                     </div>
                 </div>
             </div>

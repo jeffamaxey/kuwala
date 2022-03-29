@@ -60,9 +60,14 @@ export default (
         columnsPreview,
     }) => {
     const {selectAllColumnAddresses, deselectAllColumnAddress} = useStoreActions((actions) => actions.canvas);
+    const {toggleConfigModal} = useStoreActions(actions => actions.common);
     const addressList = columnsPreview.rows.map((el)=>{
         return el.columnAddress
     });
+
+    const updateDataBlocksConfig = () => {
+        alert('uppdate setting')
+    }
 
     const renderDataPreviewBody = () => {
         return (

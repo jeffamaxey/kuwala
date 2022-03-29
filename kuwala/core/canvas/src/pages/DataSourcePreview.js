@@ -104,13 +104,14 @@ export default () => {
         }
 
         const res = await createNewDataBlock(payload);
-        console.log('Finished creating new data blocks')
         if(res.status === 200) {
             const configuredDataBlock = {
                 ...payload,
                 catalogItemType : selectedSource.data_catalog_item_id,
                 dataSource: selectedSource,
                 dataBlockId: v4(),
+                dataBlockEntityId: res.data.id,
+                isConfigured: true,
             }
             addDataBlock(configuredDataBlock);
             alert('Successfully add a new data blocks');

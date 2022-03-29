@@ -27,6 +27,54 @@ const CanvasModel =  {
         };
         state.elements.push(newNode)
     }),
+    updateNodePayloadByDataBlocks: action((state, {updatedNodeInfo, dataBlockId}) => {
+        const updatedElements = state.elements.map((curEl) => {
+            if(curEl.data.dataBlocks.dataBlockId === dataBlockId) {
+                return {
+                    ...curEl,
+                    data: updatedNodeInfo.data
+                }
+            }
+        });
+        state.elements = updatedElements
+    }),
+    convertDataBlocksIntoElement: thunk(async (actions, nodeToRemove, {getState}) => {
+        const {dataBlocks, elements} = getState();
+        dataBlocks.forEach((el, i) => {
+            const {dataSource, ...dataBlocks} = el;
+            let dupeFlag = false;
+
+            // Check if Data blocks already converted into node
+            elements.forEach((curEl) => {
+                if(curEl.data.dataBlocks.dataBlockId === dataBlocks.dataBlockId) dupeFlag = true;
+            });
+
+            const nodeInfo = {
+                type: getNodeTypeByDataCatalogId(el.catalogItemType),
+                data: {
+                    label: 'Postgres',
+                    dataSource: dataSource,
+                    dataBlocks: dataBlocks,
+                },
+                sourcePosition: 'right',
+                targetPosition: 'left',
+            }
+
+            if(dupeFlag) {
+                // If node same node exists -> Update the node info
+                actions.updateNodePayloadByDataBlocks({updatedNodeInfo: nodeInfo, dataBlockId: dataBlocks.dataBlockId})
+            }else {
+                // Else add new node
+                actions.addNode({
+                    ...nodeInfo,
+                    position: {
+                        x: -100,
+                        y: Math.random() * window.innerHeight/2,
+                    },
+                })
+            }
+        });
+    }),
     removeNode: thunk((actions, nodeToRemove, {getState}) => {
         actions.setElements(removeElements(getState().elements, nodeToRemove))
         actions.setSelectedElement(null)
@@ -205,8 +253,6 @@ const CanvasModel =  {
     }),
 
     insertOrRemoveSelectedColumnAddress: thunk(async (actions, params, {getState}) => {
-        console.log('Triggered insert or remove')
-        console.log(params)
         actions.generateStructureIfNotExists(params);
         const selectedAddressObj = getState().selectedAddressObj;
         const {schema, category, table, column} = columnAddressSplitter(params);
@@ -216,12 +262,26 @@ const CanvasModel =  {
         } else {
             actions.addSelectedColumnAddress(params);
         }
-
     }),
 
     // Data Blocks
     addDataBlock: action((state, newDataBlocks)=>{
         state.dataBlocks = [...state.dataBlocks, newDataBlocks]
+    }),
+
+    setDataBlock: action((state, dataBlocks) => {
+        state.dataBlocks = dataBlocks;
+    }),
+
+    updateDataBlock: thunk((actions, updatedBlocks,{getState})=> {
+        const {dataBlocks} = getState();
+        const blocks = dataBlocks.map((curEl) => {
+            if(curEl.dataBlockId === updatedBlocks.dataBlockId){
+                return updatedBlocks
+            }
+        });
+        actions.setDataBlock(blocks);
+        actions.convertDataBlocksIntoElement()
     }),
 }
 
@@ -232,6 +292,15 @@ const columnAddressSplitter = (columnAddress) => {
         category: addressArray[1],
         table: addressArray[2],
         column: addressArray[3],
+    }
+}
+
+const getNodeTypeByDataCatalogId = (catalogId) => {
+    switch (catalogId){
+        case('postgres'):
+            return 'postgresDataSource'
+        default:
+            return 'transformation'
     }
 }
 
