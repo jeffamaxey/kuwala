@@ -69,3 +69,45 @@ export const getDataDictionary = (data, headers) => {
     })
     return dictionary;
 };
+
+export const preCreateSchemaExplorer = ({schemaList, addressString, setSchema}) => {
+    const arr = addressString.split('@')
+    const schemaAddress = arr[0]
+    const categoryAddress = arr[1]
+
+    let tempSchema;
+    if(categoryAddress && schemaAddress) {
+        tempSchema = schemaList.map((el) => {
+            if (el.schema === schemaAddress) {
+                return {
+                    ...el,
+                    isOpen: true,
+                    categories: el.categories.map((cat) => {
+                        if (cat.category === categoryAddress){
+                            cat.isOpen = true
+                        }
+                        return cat
+                    })
+                }
+            }
+            return el
+        })
+    } else {
+        tempSchema = schemaList.map((el) => {
+            if (el.schema === schemaAddress){
+                el.isOpen = true
+                if (el.isOpen === false) {
+                    return {
+                        ...el,
+                        categories: el.categories.map((cat) => {
+                            cat.isOpen = false
+                            return cat
+                        })
+                    }
+                }
+            }
+            return el
+        })
+    }
+    setSchema(tempSchema)
+}

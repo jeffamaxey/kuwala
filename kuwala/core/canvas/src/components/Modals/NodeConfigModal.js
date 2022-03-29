@@ -7,7 +7,7 @@ import PreviewExplorer from "../Explorer/Preview/PreviewExplorer";
 import SelectorExplorer from "../Explorer/Selector/SelectorExplorer";
 import SelectorSchemaExplorer from "../Explorer/Selector/SelectorSchemaExplorer";
 import "./node-config-modal.css"
-import {generateParamsByDataSourceType} from '../../utils/SchemaUtils'
+import {generateParamsByDataSourceType, preCreateSchemaExplorer} from '../../utils/SchemaUtils'
 import {populateAPIResult} from "../../utils/TableSelectorUtils";
 
 export default ({isShow, configData}) => {
@@ -32,28 +32,29 @@ export default ({isShow, configData}) => {
         rows: []
     });
 
-    useEffect(()=>{
-        console.log(columnsPreview)
-    }, [setColumnsPreview])
-
     useEffect( ()=> {
         fetchSchema().then(null)
-        populateConfigByDataBlocks()
+        populateConfigByDataBlocks().then(null)
     }, [selectedElement])
-
-    useEffect(()=>{
-        console.log(selectedTable)
-    }, [selectedTable])
 
     const populateConfigByDataBlocks = async () => {
         if(selectedElement){
             if(selectedElement.data.dataBlocks) {
-                console.log("DATA BLOCKS EXISTS")
                 const blocks = selectedElement.data.dataBlocks;
                 if(blocks.schema_name && blocks.table_name) {
                     const selectedAddress = `${blocks.schema_name}@tables@${blocks.table_name}`
                     setSelectedTable(selectedAddress)
                     setIsColumnsDataPreviewLoading(true)
+                    setIsSchemaLoading(true)
+                    const schemaRes = await getSchema(selectedElement.data.dataSource.id);
+                    if(schemaRes.status === 200) {
+                        const populatedSchema = populateSchema(schemaRes.data);
+                        preCreateSchemaExplorer({
+                            schemaList: populatedSchema,
+                            addressString: selectedAddress,
+                            setSchema: setSchema,
+                        })
+                    }
                     const params = generateParamsByDataSourceType(
                         selectedElement.data.dataSource.data_catalog_item_id,
                         selectedAddress
@@ -72,6 +73,7 @@ export default ({isShow, configData}) => {
                         });
                     }
                     setIsColumnsDataPreviewLoading(false)
+                    setIsSchemaLoading(false)
                 }
             }
         }
