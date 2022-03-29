@@ -3,7 +3,7 @@ import {v4} from "uuid";
 import {removeElements, addEdge} from 'react-flow-renderer'
 
 import {getAllDataCatalogItems, saveSelectedDataCatalogItems} from '../../api/DataCatalogApi';
-import {getDataSource, saveConnection} from '../../api/DataSourceApi';
+import {getDataSource} from '../../api/DataSourceApi';
 
 const CanvasModel =  {
     elements: [],
@@ -205,6 +205,8 @@ const CanvasModel =  {
     }),
 
     insertOrRemoveSelectedColumnAddress: thunk(async (actions, params, {getState}) => {
+        console.log('Triggered insert or remove')
+        console.log(params)
         actions.generateStructureIfNotExists(params);
         const selectedAddressObj = getState().selectedAddressObj;
         const {schema, category, table, column} = columnAddressSplitter(params);
@@ -218,8 +220,8 @@ const CanvasModel =  {
     }),
 
     // Data Blocks
-    addUnConfiguredDataBlocks: action((state, newDataBlocks)=>{
-        state.unConfiguredDataBlocks = [...state.unConfiguredDataBlocks, newDataBlocks]
+    addDataBlock: action((state, newDataBlocks)=>{
+        state.dataBlocks = [...state.dataBlocks, newDataBlocks]
     }),
 }
 

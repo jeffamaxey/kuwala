@@ -5,11 +5,12 @@ import {useStoreActions, useStoreState} from "easy-peasy";
 import "./styles/data-pipeline-management.style.css";
 import AddSVG from '../icons/add_sources_green.png';
 import {createNewDataBlock} from "../api/DataBlockApi"
+import {v4} from "uuid";
 
 export default () => {
     const navigate = useNavigate();
     const { dataSource } = useStoreState((state) => state.canvas);
-    const { getDataSources, addDataSourceToCanvas, addUnConfiguredDataBlocks } = useStoreActions((actions) => actions.canvas);
+    const { getDataSources, addDataSourceToCanvas, addDataBlock } = useStoreActions((actions) => actions.canvas);
     const [ isAddToCanvasLoading, setIsAddToCanvasLoading ] = useState(false)
 
     useEffect(()=> {
@@ -24,7 +25,9 @@ export default () => {
             data_source_id: selectedSource.id,
             name: `${selectedSource.data_catalog_item_id}`,
             columns: [],
-            catalogItem: selectedSource.data_catalog_item_id
+            catalogItemType : selectedSource.data_catalog_item_id,
+            dataSource: selectedSource,
+            dataBlockId: v4(),
         }
 
         switch (selectedSource.data_catalog_item_id) {
@@ -40,7 +43,7 @@ export default () => {
                 return;
         }
 
-        addUnConfiguredDataBlocks(unConfiguredBlockPayload);
+        addDataBlock(unConfiguredBlockPayload);
         alert('Added new un configured data blocks');
         setIsAddToCanvasLoading(false);
     }

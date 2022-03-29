@@ -1,7 +1,7 @@
 import React, {useEffect, useMemo, useState} from "react";
 import Header from "../components/Header";
 import {useLocation, Link} from "react-router-dom";
-import {useStoreState} from "easy-peasy";
+import {useStoreActions, useStoreState} from "easy-peasy";
 import ReactTable from 'react-table-6';
 import "react-table-6/react-table.css";
 import "./styles/data-source-preview-table.style.css";
@@ -13,6 +13,7 @@ import FolderSVG from "../icons/folder-solid.svg"
 import TableSVG from "../icons/table-solid.svg"
 import {getSchema, getTablePreview} from "../api/DataSourceApi";
 import {createNewDataBlock} from "../api/DataBlockApi";
+import {v4} from "uuid";
 
 const Table = ({columns, data}) => {
     const memoizedCols = useMemo(()=> {
@@ -50,6 +51,7 @@ export default () => {
     const location = useLocation()
     const dataIndex = location.state.index
     const {dataSource} = useStoreState((state) => state.canvas);
+    const {addDataBlock} = useStoreActions((actions) => actions.canvas);
     const selectedSource = dataSource.filter((el) => el.id === dataIndex)[0];
     const [selectedTable, setSelectedTable] = useState(null)
     const [isTableDataPreviewLoading, setIsTableDataPreviewLoading] = useState(false)
@@ -104,9 +106,16 @@ export default () => {
         const res = await createNewDataBlock(payload);
         console.log('Finished creating new data blocks')
         if(res.status === 200) {
-            alert('Successfully add a new data blocks')
+            const configuredDataBlock = {
+                ...payload,
+                catalogItemType : selectedSource.data_catalog_item_id,
+                dataSource: selectedSource,
+                dataBlockId: v4(),
+            }
+            addDataBlock(configuredDataBlock);
+            alert('Successfully add a new data blocks');
         } else {
-            alert('Something went wrong when adding data blocks')
+            alert('Something went wrong when adding data blocks');
         }
         setIsAddToCanvasLoading(false);
     }

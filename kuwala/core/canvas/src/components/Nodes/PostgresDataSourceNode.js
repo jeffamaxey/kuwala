@@ -3,12 +3,10 @@ import React, {useState} from 'react';
 import { Handle } from 'react-flow-renderer';
 import NodeConfigModal from "../Modals/NodeConfigModal";
 import {useStoreActions, useStoreState} from "easy-peasy";
+import PostgreSVG from "../../icons/PostgreSQL.svg";
 
 const PostgresDataSourceNode = (({data}) => {
     const {toggleConfigModal} = useStoreActions(actions => actions.common);
-
-
-    const {dataSource} = data
 
     return (
         <div
@@ -25,7 +23,7 @@ const PostgresDataSourceNode = (({data}) => {
                 `}>
                     <div>
                         <img
-                            src={dataSource.logo}
+                            src={PostgreSVG}
                             className={'user-select-none'}
                             style={{
                                 width: 64,

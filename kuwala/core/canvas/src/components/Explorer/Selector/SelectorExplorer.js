@@ -10,6 +10,8 @@ const Table = ({columns, data, selectedTable}) => {
     const category = addressArray[1];
     const table = addressArray[2];
 
+    console.log(selectedAddressObj)
+
     let listOfSelectedColumn = [];
     try{
         listOfSelectedColumn = selectedAddressObj[schema][category][table];

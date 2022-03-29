@@ -35,7 +35,6 @@ export default (
         setSelectedTable(addressString);
         setIsColumnsDataPreviewLoading(true);
         const params = generateParamsByDataSourceType(selectedElement.data.dataSource.data_catalog_item_id, addressString);
-
         const res = await getColumns({
             id: selectedElement.data.dataSource.id,
             params

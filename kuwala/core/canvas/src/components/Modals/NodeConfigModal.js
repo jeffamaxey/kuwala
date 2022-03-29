@@ -1,16 +1,19 @@
 import React, {useEffect, useState} from "react";
 import {useStoreActions, useStoreState} from "easy-peasy";
-import {getSchema} from "../../api/DataSourceApi";
+import {getColumns, getSchema} from "../../api/DataSourceApi";
 import {populateSchema} from '../../utils/SchemaUtils';
 import SchemaExplorer from '../Explorer/Preview/SchemaExplorer'
 import PreviewExplorer from "../Explorer/Preview/PreviewExplorer";
 import SelectorExplorer from "../Explorer/Selector/SelectorExplorer";
 import SelectorSchemaExplorer from "../Explorer/Selector/SelectorSchemaExplorer";
+import "./node-config-modal.css"
+import {generateParamsByDataSourceType} from '../../utils/SchemaUtils'
+import {populateAPIResult} from "../../utils/TableSelectorUtils";
 
 export default ({isShow, configData}) => {
     const SELECTION_DISPLAY = 'selection';
     const PREVIEW_DISPLAY = 'preview';
-
+    const { insertOrRemoveSelectedColumnAddress, selectAllColumnAddresses} = useStoreActions(actions => actions.canvas);
     const {toggleConfigModal} = useStoreActions(actions => actions.common);
     const {selectedElement} = useStoreState(state => state.canvas);
     const [schemaList, setSchema] = useState([])
@@ -29,9 +32,50 @@ export default ({isShow, configData}) => {
         rows: []
     });
 
+    useEffect(()=>{
+        console.log(columnsPreview)
+    }, [setColumnsPreview])
+
     useEffect( ()=> {
         fetchSchema().then(null)
+        populateConfigByDataBlocks()
     }, [selectedElement])
+
+    useEffect(()=>{
+        console.log(selectedTable)
+    }, [selectedTable])
+
+    const populateConfigByDataBlocks = async () => {
+        if(selectedElement){
+            if(selectedElement.data.dataBlocks) {
+                console.log("DATA BLOCKS EXISTS")
+                const blocks = selectedElement.data.dataBlocks;
+                if(blocks.schema_name && blocks.table_name) {
+                    const selectedAddress = `${blocks.schema_name}@tables@${blocks.table_name}`
+                    setSelectedTable(selectedAddress)
+                    setIsColumnsDataPreviewLoading(true)
+                    const params = generateParamsByDataSourceType(
+                        selectedElement.data.dataSource.data_catalog_item_id,
+                        selectedAddress
+                    );
+                    const res = await getColumns({
+                        id: selectedElement.data.dataSource.id,
+                        params
+                    });
+                    selectAllColumnAddresses(blocks.columns.map((el) => `${selectedAddress}@${el}`))
+                    if (res.status === 200) {
+                        populateAPIResult({
+                            res: res,
+                            setColumnsPreview: setColumnsPreview,
+                            addressString: selectedAddress,
+                            insertOrRemoveSelectedColumnAddress: insertOrRemoveSelectedColumnAddress
+                        });
+                    }
+                    setIsColumnsDataPreviewLoading(false)
+                }
+            }
+        }
+    }
 
     async function fetchSchema() {
         if(selectedElement) {
@@ -250,7 +294,9 @@ export default ({isShow, configData}) => {
                     bg-opacity-50
                 `}
         >
-            <div className="modal-dialog modal-dialog-centered modal-xl h-100 relative w-full pointer-events-none">
+            <div
+                className="modal-dialog modal-dialog-centered modal-xl h-100 relative w-full pointer-events-none override-modal-dialog"
+            >
                 <div
                     className={`
                         modal-content

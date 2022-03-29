@@ -20,13 +20,59 @@ export default function () {
     const reactFlowWrapper = useRef(null);
     const [reactFlowInstance, setReactFlowInstance] = useState(null);
 
-    const {elements, selectedElement, newNodeInfo, dataSource} = useStoreState(state => state.canvas);
+    const {elements, selectedElement, newNodeInfo, dataSource, dataBlocks} = useStoreState(state => state.canvas);
     const {showConfigModal} = useStoreState(state => state.common);
-    const {addNode, setSelectedElement, removeNode, connectNodes, setOpenDataView, getDataSources} = useStoreActions(actions => actions.canvas);
+    const {
+        addNode, setSelectedElement, removeNode, connectNodes, setOpenDataView, getDataSources
+    } = useStoreActions(actions => actions.canvas);
 
     useEffect(()=> {
-       if (dataSource.length <= 0) getDataSources()
+        if (dataSource.length <= 0) getDataSources()
+        if (dataBlocks.length > 0) convertDataBlocksIntoNodeElement()
     }, [])
+
+    const convertDataBlocksIntoNodeElement = () => {
+        dataBlocks.forEach((el, i) => {
+            const {dataSource, ...dataBlocks} = el;
+            let dupeFlag = false;
+
+            // Check if Data blocks already converted into node
+            elements.forEach((curEl) => {
+               if(curEl.data.dataBlocks.dataBlockId === dataBlocks.dataBlockId) dupeFlag = true;
+            });
+
+            if(dupeFlag) return;
+
+            const nodeInfo = {
+                type: getNodeTypeByDataCatalogId(el.catalogItemType),
+                data: {
+                    label: 'Postgres',
+                    dataSource: dataSource,
+                    dataBlocks: dataBlocks,
+                },
+                sourcePosition: 'right',
+                targetPosition: 'left',
+            }
+
+            addNode({
+                ...nodeInfo,
+                position: {
+                    x: -100,
+                    y: Math.random() * window.innerHeight/2,
+                },
+            })
+        });
+    }
+
+    const getNodeTypeByDataCatalogId = (catalogId) => {
+        switch (catalogId){
+            case('postgres'):
+                return 'postgresDataSource'
+            default:
+                return 'transformation'
+        }
+
+    }
 
     const onConnect = (params) => connectNodes(params)
     const onElementsRemove = (elementsToRemove) => removeNode(elementsToRemove)
@@ -47,7 +93,7 @@ export default function () {
         addNode({
             ...newNodeInfo,
             position
-        })
+        });
     }
 
     const renderFlow = () => {
