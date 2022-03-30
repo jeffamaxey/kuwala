@@ -3,16 +3,52 @@ import Header from "../components/Header";
 import {useNavigate, Link} from "react-router-dom";
 import {useStoreActions, useStoreState} from "easy-peasy";
 import "./styles/data-pipeline-management.style.css";
-import AddSVG from '../icons/add_sources_green.png'
+import AddSVG from '../icons/add_sources_green.png';
+import {createNewDataBlock} from "../api/DataBlockApi"
+import {v4} from "uuid";
 
 export default () => {
-    const navigate = useNavigate()
-    const { dataSource } = useStoreState((state) => state.canvas)
-    const { getDataSources } = useStoreActions((actions) => actions.canvas)
+    const navigate = useNavigate();
+    const { dataSource } = useStoreState((state) => state.canvas);
+    const { getDataSources, addDataSourceToCanvas, addDataBlock } = useStoreActions((actions) => actions.canvas);
+    const [ isAddToCanvasLoading, setIsAddToCanvasLoading ] = useState(false)
 
     useEffect(()=> {
         getDataSources()
-    }, [])
+    }, []);
+
+    const addToCanvas = async (selectedSource) => {
+        if(!selectedSource) return
+        setIsAddToCanvasLoading(true);
+
+        const unConfiguredBlockPayload = {
+            data_source_id: selectedSource.id,
+            name: `${selectedSource.data_catalog_item_id}`,
+            columns: [],
+            catalogItemType : selectedSource.data_catalog_item_id,
+            dataSource: selectedSource,
+            dataBlockId: v4(), // Used to track nodes & table selection
+            dataBlockEntityId: null, // This will be filled with entity id from database
+            isConfigured: false,
+        }
+
+        switch (selectedSource.data_catalog_item_id) {
+            case("bigquery"):
+                unConfiguredBlockPayload.dataset_name = null
+                unConfiguredBlockPayload.table_name = null
+                break;
+            case("postgres"):
+                unConfiguredBlockPayload.schema_name = null
+                unConfiguredBlockPayload.table_name = null
+                break;
+            default:
+                return;
+        }
+
+        addDataBlock(unConfiguredBlockPayload);
+        alert('Added new un configured data blocks');
+        setIsAddToCanvasLoading(false);
+    }
 
     const renderPipelineManager = () => {
         if(dataSource.length <= 0) {
@@ -66,7 +102,7 @@ export default () => {
                                             state={{
                                                 index: e.id,
                                             }}
-                                            className={'bg-white px-4 py-2 text-white rounded-md border-2 border-kuwala-green hover:bg-kuwala-bg-gray'}
+                                            className={'flex bg-white px-4 py-2 text-white rounded-md border-2 border-kuwala-green hover:bg-kuwala-bg-gray items-center '}
                                         >
                                             <span className={'text-kuwala-green font-semibold'}>Configure</span>
                                         </Link>
@@ -77,12 +113,39 @@ export default () => {
                                                 index: e.id,
                                             }}
                                             className={`
-                                        bg-white text-kuwala-green px-4 py-2 text-white rounded-md border-2 border-kuwala-green hover:bg-kuwala-bg-gray
-                                        ${e.connected ? '' : 'hidden'}
-                                    `}
+                                                bg-white text-kuwala-green px-4 py-2 rounded-md border-2 border-kuwala-green hover:bg-kuwala-bg-gray
+                                            ${e.connected ? '' : 'hidden'}
+                                        `}
                                         >
                                             <span className={'text-kuwala-green font-semibold'}>Preview Data</span>
                                         </Link>
+                                        <button
+                                            className={`
+                                                bg-kuwala-green text-white px-4 py-2 rounded
+                                                font-semibold
+                                                hover:bg-kuwala-light-green 
+                                                ${e.connected ? '' : 'hidden'}
+                                            `}
+                                            disabled={isAddToCanvasLoading}
+                                            onClick={async ()=>{
+                                                addDataSourceToCanvas(e)
+                                                await addToCanvas(e)
+                                            }}
+                                        >
+                                            <span className={'text-white w-full py-2'}>
+                                                {isAddToCanvasLoading ?
+                                                    <div className="flex justify-center items-center">
+                                                        <div
+                                                            className="spinner-border animate-spin inline-block w-6 h-6 border-4 rounded-full"
+                                                            role="status">
+                                                            <span className="visually-hidden">Loading...</span>
+                                                        </div>
+                                                    </div>
+                                                    :
+                                                    'Add to canvas'
+                                                }
+                                            </span>
+                                        </button>
                                     </div>
                                 </td>
                             </tr>

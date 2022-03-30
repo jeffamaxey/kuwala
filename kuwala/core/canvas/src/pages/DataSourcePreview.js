@@ -1,7 +1,7 @@
 import React, {useEffect, useMemo, useState} from "react";
 import Header from "../components/Header";
 import {useLocation, Link} from "react-router-dom";
-import {useStoreState} from "easy-peasy";
+import {useStoreActions, useStoreState} from "easy-peasy";
 import ReactTable from 'react-table-6';
 import "react-table-6/react-table.css";
 import "./styles/data-source-preview-table.style.css";
@@ -12,6 +12,8 @@ import ArrowDown from "../icons/arrow-down-solid.svg"
 import FolderSVG from "../icons/folder-solid.svg"
 import TableSVG from "../icons/table-solid.svg"
 import {getSchema, getTablePreview} from "../api/DataSourceApi";
+import {createNewDataBlock} from "../api/DataBlockApi";
+import {v4} from "uuid";
 
 const Table = ({columns, data}) => {
     const memoizedCols = useMemo(()=> {
@@ -49,11 +51,13 @@ export default () => {
     const location = useLocation()
     const dataIndex = location.state.index
     const {dataSource} = useStoreState((state) => state.canvas);
+    const {addDataBlock, addDataSourceToCanvas} = useStoreActions((actions) => actions.canvas);
     const selectedSource = dataSource.filter((el) => el.id === dataIndex)[0];
-    const [schemaList, setSchema] = useState([])
     const [selectedTable, setSelectedTable] = useState(null)
     const [isTableDataPreviewLoading, setIsTableDataPreviewLoading] = useState(false)
+    const [schemaList, setSchema] = useState([])
     const [isSchemaLoading, setIsSchemaLoading] = useState(false)
+    const [isAddToCanvasLoading, setIsAddToCanvasLoading] = useState(false);
     const [tableDataPreview, setTableDataPreview] = useState({
         columns: [],
         rows: []
@@ -71,6 +75,55 @@ export default () => {
             setSchema(populatedSchema)
         }
         setIsSchemaLoading(false)
+    }
+
+    const addToCanvas = async () => {
+        if(!selectedSource) return
+        addDataSourceToCanvas(selectedSource);
+        setIsAddToCanvasLoading(true);
+
+        const selectedAddress = selectedTable.split('@');
+
+        const columnsArray = tableDataPreview.columns.slice(1).map((el) => `${el.Header}`);
+        const payload = {
+            data_source_id: selectedSource.id,
+            name: `${selectedSource.data_catalog_item_id}_${selectedAddress[2]}`,
+            columns: columnsArray,
+        }
+
+        switch (selectedSource.data_catalog_item_id) {
+            case("bigquery"):
+                payload.dataset_name = selectedAddress[1]
+                payload.table_name = selectedAddress[2]
+                break;
+            case("postgres"):
+                payload.schema_name = selectedAddress[0]
+                payload.table_name = selectedAddress[2]
+                break;
+            default:
+                return;
+        }
+
+        try {
+            const res = await createNewDataBlock(payload);
+            if(res.status === 200) {
+                const configuredDataBlock = {
+                    ...payload,
+                    catalogItemType : selectedSource.data_catalog_item_id,
+                    dataSource: selectedSource,
+                    dataBlockId: v4(),
+                    dataBlockEntityId: res.data.id,
+                    isConfigured: true,
+                }
+                addDataBlock(configuredDataBlock);
+                alert('Successfully add a new data blocks');
+            } else {
+                alert('Something went wrong when adding data blocks');
+            }
+        } catch(e){
+            alert('Something went wrong when adding data blocks');
+        }
+        setIsAddToCanvasLoading(false);
     }
 
     const populateSchema = (rawSchema) => {
@@ -429,6 +482,10 @@ export default () => {
         }
     }
 
+    const saveDataBlockBySelectedTable = async () => {
+        await createNewDataBlock()
+    }
+
     return (
         <div className={`flex flex-col h-screen w-screen antialiased text-gray-900`}>
             <main className={'flex flex-col h-full w-full bg-kuwala-bg-gray'}>
@@ -449,13 +506,25 @@ export default () => {
                     {renderDataPreview()}
                 </div>
 
-                <div className={'flex px-20 mb-8'}>
+                <div className={'flex flex-row justify-between items-center px-20 mb-8'}>
                     <Link
                         className={'bg-kuwala-green text-white rounded-md px-4 py-2 mt-4 mb-4 hover:text-stone-300'}
                         to={'/data-pipeline-management'}
                     >
                         Back
                     </Link>
+                    <button
+                        className={`
+                                text-white rounded-md px-4 py-2 mt-4 mb-4
+                                ${(selectedTable && (!isTableDataPreviewLoading && !isAddToCanvasLoading)) ? 'bg-kuwala-green hover:text-stone-300' : 'bg-red-200'}
+                            `}
+                        disabled={!(selectedTable && (!isTableDataPreviewLoading && !isAddToCanvasLoading))}
+                        onClick={async ()=>{
+                            await addToCanvas()
+                        }}
+                    >
+                        Add to Canvas
+                    </button>
                 </div>
             </main>
         </div>
