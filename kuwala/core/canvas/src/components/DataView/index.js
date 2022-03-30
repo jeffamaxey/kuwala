@@ -1,5 +1,5 @@
 import React, {useEffect, useMemo, useState} from "react";
-import {useStoreState} from "easy-peasy";
+import {useStoreActions, useStoreState} from "easy-peasy";
 import ReactTable from "react-table-6";
 import {getDataBlockPreview} from "../../api/DataBlockApi";
 import {getDataDictionary} from "../../utils/SchemaUtils";
@@ -40,6 +40,7 @@ const Table = ({columns, data}) => {
 
 export default () => {
     const {selectedElement, openDataView} = useStoreState(state => state.canvas );
+    const {toggleDataView} = useStoreActions(actions => actions.canvas );
     const [isDataPreviewLoading, setIsDataPreviewLoading] = useState(false);
     const [blocksPreview, setBlocksPreview] = useState({
         columns: [],
@@ -48,7 +49,6 @@ export default () => {
 
     useEffect(()=> {
         if(openDataView) {
-            console.log('Fetching data for preview')
             fetchPreviewFromSavedDataBlocks().then(null)
         }
     }, [openDataView])
@@ -91,10 +91,8 @@ export default () => {
                             rows: getDataDictionary(res.data.rows, res.data.columns),
                         });
                     }
-
-                    console.log(res.data)
                 }catch (e) {
-                    console.log('Failed when fetchin data blocks data');
+                    console.error('Failed when fetching data blocks data', e)
                 }
                 setIsDataPreviewLoading(false)
             }
@@ -117,7 +115,14 @@ export default () => {
             }
         >
             <div className={'relative w-full flex-1 overflow-y-scroll overflow-x-hidden bg-stone-300'}>
-                <div className={'flex flex-col overflow-x-auto mx-8 mt-4 rounded-lg border-2 border-kuwala-green bg-white h-full'}>
+                <div className={'flex flex-row-reverse w-full items-center'}>
+                    <span className={'font-bold text-2xl mr-4 mt-1 cursor-pointer text-stone-500'}
+                        onClick={toggleDataView}
+                    >
+                        X
+                    </span>
+                </div>
+                <div className={'flex flex-col overflow-x-auto mx-8 mt-1 rounded-lg border-2 border-kuwala-green bg-white h-full'}>
                     {
                         isDataPreviewLoading
                         ?

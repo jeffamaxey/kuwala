@@ -16,7 +16,6 @@ const CanvasModel =  {
     canvasSelectedDataSource: [],
     selectedColumnAddress: [],
     selectedAddressObj: {},
-    unConfiguredDataBlocks: [],
     dataBlocks: [],
 
     // Elements
@@ -201,7 +200,6 @@ const CanvasModel =  {
             });
 
             if (!isDuplicate){
-                // state.selectedColumnAddress = [...state.selectedColumnAddress, newAddress]
                 state.selectedAddressObj = tempState
             }
         }
@@ -214,7 +212,7 @@ const CanvasModel =  {
             const newSelectedTableList = tempState[schema][category][table].filter((el) => el !== column)
             tempState[schema][category][table] = newSelectedTableList
         } catch (e) {
-            console.log(e)
+            console.error(e)
         }
         state.selectedAddressObj = tempState
     }),

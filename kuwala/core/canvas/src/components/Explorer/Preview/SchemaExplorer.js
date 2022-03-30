@@ -14,7 +14,7 @@ export default ({selectedTable, setSelectedTable, isSchemaLoading, schemaList, s
         return (
             <>
                 <div className={'bg-kuwala-green w-full pl-4 py-2 text-white font-semibold'}>
-                    Database: Kuwala
+                    Database: {selectedElement.data.dataSource.connection_parameters[4].value}
                 </div>
                 <div className={'overflow-y-scroll overflow-x-auto h-full w-full'}>
                     {isSchemaLoading

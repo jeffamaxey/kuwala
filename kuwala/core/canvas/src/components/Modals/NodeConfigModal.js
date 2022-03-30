@@ -34,6 +34,7 @@ export default ({isShow, configData}) => {
         columns: [],
         rows: []
     });
+    const [isNodeSaveLoading, setIsNodeSaveLoading] = useState(false);
 
     useEffect( ()=> {
         fetchSchema().then(null)
@@ -48,6 +49,7 @@ export default ({isShow, configData}) => {
     }, [selectorDisplay])
 
     const upsertDataBlocks = async () => {
+        setIsNodeSaveLoading(true);
         if(selectedElement){
             if(selectedElement.data.dataBlocks) {
                 const blocks = selectedElement.data.dataBlocks;
@@ -89,7 +91,7 @@ export default ({isShow, configData}) => {
                             dataSource: selectedSource,
                         }
                         updateDataBlock(configuredDataBlock);
-                        alert('Successfully created a configured data blocks');
+                        toggleConfigModal();
                     } else {
                         alert('Failed to create a new blocks')
                     }
@@ -122,6 +124,7 @@ export default ({isShow, configData}) => {
                 }
             }
         }
+        setIsNodeSaveLoading(false);
     }
 
     const getSelectedColumnsOfCurrentTable = () => {
@@ -422,8 +425,7 @@ export default ({isShow, configData}) => {
             });
 
         } catch(e) {
-            console.log('something went wrong')
-            console.log(e)
+            console.error('Failed to pre populate preview explorer', e)
         }
         setIsTableDataPreviewLoading(false)
     }
@@ -492,7 +494,24 @@ export default ({isShow, configData}) => {
                                     onClick={async () => {
                                         await upsertDataBlocks()
                                     }}
-                                >Save</span>
+                                >
+                                    <div className="flex justify-center items-center">
+
+                                        {
+                                            isNodeSaveLoading
+                                            ?
+                                                (
+                                                    <div
+                                                        className="spinner-border animate-spin inline-block w-6 h-6 border-4 rounded-full"
+                                                        role="status">
+                                                        <span className="visually-hidden">Loading...</span>
+                                                    </div>
+                                                )
+                                            :
+                                                'Save'
+                                        }
+                                    </div>
+                                </span>
                         </div>
                     </div>
                 </div>

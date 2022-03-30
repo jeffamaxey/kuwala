@@ -46,7 +46,7 @@ export default () => {
         }
 
         addDataBlock(unConfiguredBlockPayload);
-        alert('Added new un configured data blocks');
+        navigate('/')
         setIsAddToCanvasLoading(false);
     }
 

@@ -1,6 +1,6 @@
 import React, {useEffect, useMemo, useState} from "react";
 import Header from "../components/Header";
-import {useLocation, Link} from "react-router-dom";
+import {useLocation, Link, useNavigate} from "react-router-dom";
 import {useStoreActions, useStoreState} from "easy-peasy";
 import ReactTable from 'react-table-6';
 import "react-table-6/react-table.css";
@@ -48,6 +48,7 @@ const Table = ({columns, data}) => {
 }
 
 export default () => {
+    const navigate = useNavigate();
     const location = useLocation()
     const dataIndex = location.state.index
     const {dataSource} = useStoreState((state) => state.canvas);
@@ -116,12 +117,14 @@ export default () => {
                     isConfigured: true,
                 }
                 addDataBlock(configuredDataBlock);
-                alert('Successfully add a new data blocks');
+                navigate('/')
             } else {
                 alert('Something went wrong when adding data blocks');
+                console.error(res.data)
             }
         } catch(e){
             alert('Something went wrong when adding data blocks');
+            console.error(e)
         }
         setIsAddToCanvasLoading(false);
     }
@@ -482,10 +485,6 @@ export default () => {
         }
     }
 
-    const saveDataBlockBySelectedTable = async () => {
-        await createNewDataBlock()
-    }
-
     return (
         <div className={`flex flex-col h-screen w-screen antialiased text-gray-900`}>
             <main className={'flex flex-col h-full w-full bg-kuwala-bg-gray'}>
@@ -515,7 +514,7 @@ export default () => {
                     </Link>
                     <button
                         className={`
-                                text-white rounded-md px-4 py-2 mt-4 mb-4
+                                text-white rounded-md px-6 py-2 mt-4 mb-4 w-44 font-semibold
                                 ${(selectedTable && (!isTableDataPreviewLoading && !isAddToCanvasLoading)) ? 'bg-kuwala-green hover:text-stone-300' : 'bg-red-200'}
                             `}
                         disabled={!(selectedTable && (!isTableDataPreviewLoading && !isAddToCanvasLoading))}
@@ -523,7 +522,19 @@ export default () => {
                             await addToCanvas()
                         }}
                     >
-                        Add to Canvas
+                        {
+                            isAddToCanvasLoading
+                                ?
+                                (
+                                    <div
+                                        className="spinner-border animate-spin inline-block w-4 h-4 border-4 rounded-full"
+                                        role="status">
+                                        <span className="visually-hidden">Loading...</span>
+                                    </div>
+                                )
+                                :
+                                'Add to Canvas'
+                        }
                     </button>
                 </div>
             </main>
