@@ -1,8 +1,5 @@
 import React, {useState} from "react";
 
-import DataSourceHandler from "./NodeHandlers/DataSourceHandler";
-import TransformationHandler from "./NodeHandlers/TransformationHandler";
-import VisualizationHandler from "./NodeHandlers/VisualizationHandler";
 import {useStoreActions, useStoreState} from "easy-peasy";
 import {Link} from "react-router-dom";
 

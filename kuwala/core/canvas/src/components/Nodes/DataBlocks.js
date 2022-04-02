@@ -3,7 +3,7 @@ import React, {useState} from 'react';
 import { Handle } from 'react-flow-renderer';
 import {useStoreActions, useStoreState} from "easy-peasy";
 
-const PostgresDataSourceNode = (({data}) => {
+const DataBlocks = (({data}) => {
     const {toggleConfigModal} = useStoreActions(actions => actions.common);
     const {toggleDataView} = useStoreActions(actions => actions.canvas);
     return (
@@ -33,7 +33,7 @@ const PostgresDataSourceNode = (({data}) => {
                     </div>
                     <div className={'flex flex-col justify-between ml-6'}>
                         <div className={'flex justify-between items-center text-lg font-semibold'}>
-                            <span>Postgres table</span>
+                            <span>{data.dataSource.name} Table</span>
                         </div>
                         <div className={'flex flex-row space-x-2'}>
                             <div className="flex space-x-2 justify-center">
@@ -72,7 +72,8 @@ const PostgresDataSourceNode = (({data}) => {
                                     disabled={!data.dataBlocks.isConfigured}
                                     onClick={toggleDataView}
                                     draggable={false}
-                                >Preview
+                                >
+                                    Preview
                                 </button>
                             </div>
                         </div>
@@ -105,4 +106,4 @@ const PostgresDataSourceNode = (({data}) => {
     );
 });
 
-export default PostgresDataSourceNode;
+export default DataBlocks;

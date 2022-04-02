@@ -1,62 +1,15 @@
 import React from "react";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
+import {faCheck} from "@fortawesome/free-solid-svg-icons";
 
 export const populateAPIResult = ({res, setColumnsPreview, addressString, insertOrRemoveSelectedColumnAddress}) => {
-    const cols = [{
-        Header: "",
-        id: "row",
-        filterable: false,
-        width: 50,
-        Cell: (row) => {
-            return (
-                <div
-                    className={`
-                                flex flex-row justify-center items-center h-6 w-6 rounded-full
-                                border-2 border-kuwala-green 
-                                cursor-pointer
-                                select-none
-                            `}
-                    onClick={()=> {
-                        insertOrRemoveSelectedColumnAddress(row.original.columnAddress)
-                    }}
-                >
-                    <FontAwesomeIcon
-                        icon={'check'}
-                        className={`
-                            fill-kuwala-green h-4 w-4
-                            ${row.original.selected ? '' : 'hidden'}
-                        `}
-                    />
-                </div>
-            );
-        }
-    }, {
-        Header: 'name',
-        accessor: 'column',
-        Cell: (row) => {
-            return <div className={'font-light select-none'}>
-                {row.value}
-            </div>
-        }
-    }, {
-        Header: 'type',
-        accessor: 'type',
-        Cell: (row) => {
-            return (
-                <span className={'bg-gray-100 px-4 py-1 text-sm font-semibold text-gray-400 rounded-lg lowercase'}>
-                        {row.value}
-                    </span>
-            );
-        }
-    }]
-
     setColumnsPreview({
-        columns: cols,
+        columns: [],
         rows: prePopulate(res.data, addressString),
     });
 }
 
-const prePopulate = (raw, addressString) => {
+export const prePopulate = (raw, addressString) => {
     return raw.map((el)=> {
         return {
             ...el,

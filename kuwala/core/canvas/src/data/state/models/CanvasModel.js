@@ -2,8 +2,10 @@ import { action, thunk } from "easy-peasy";
 import {v4} from "uuid";
 import {removeElements, addEdge} from 'react-flow-renderer'
 
-import {getAllDataCatalogItems, saveSelectedDataCatalogItems} from '../../api/DataCatalogApi';
-import {getDataSource} from '../../api/DataSourceApi';
+import {getAllDataCatalogItems, saveSelectedDataCatalogItems} from '../../../api/DataCatalogApi';
+import {getDataSource} from '../../../api/DataSourceApi';
+
+import DataSourceDTO from '../../dto/DataSourceDTO';
 
 const CanvasModel =  {
     elements: [],
@@ -26,8 +28,10 @@ const CanvasModel =  {
         };
         state.elements.push(newNode)
     }),
-    updateNodePayloadByDataBlocks: action((state, {updatedNodeInfo, dataBlockId}) => {
-        const updatedElements = state.elements.map((curEl) => {
+
+    updateNodePayloadByDataBlocks: action((state, {updatedNodeInfo, dataBlockId, elements}) => {
+        console.log(elements);
+        const updatedElements = elements.map((curEl) => {
             if(curEl.data.dataBlocks.dataBlockId === dataBlockId) {
                 return {
                     ...curEl,
@@ -37,23 +41,23 @@ const CanvasModel =  {
         });
         state.elements = updatedElements
     }),
+
     convertDataBlocksIntoElement: thunk(async (actions, nodeToRemove, {getState}) => {
         const {dataBlocks, elements} = getState();
-        dataBlocks.forEach((el, i) => {
-            const {dataSource, ...dataBlocks} = el;
+        dataBlocks.forEach((block) => {
             let dupeFlag = false;
 
             // Check if Data blocks already converted into node
             elements.forEach((curEl) => {
-                if(curEl.data.dataBlocks.dataBlockId === dataBlocks.dataBlockId) dupeFlag = true;
+                if(curEl.data.dataBlocks.dataBlockId === block.dataBlockId) dupeFlag = true;
             });
 
             const nodeInfo = {
-                type: getNodeTypeByDataCatalogId(el.catalogItemType),
+                type: getNodeTypeByDataCatalogId(block.dataCatalogType),
                 data: {
-                    label: 'Postgres',
-                    dataSource: dataSource,
-                    dataBlocks: dataBlocks,
+                    label: getLabelByDataCatalogId(block.dataCatalogType),
+                    dataSource: block.dataSourceDTO,
+                    dataBlocks: {...block},
                 },
                 sourcePosition: 'right',
                 targetPosition: 'left',
@@ -61,7 +65,7 @@ const CanvasModel =  {
 
             if(dupeFlag) {
                 // If node same node exists -> Update the node info
-                actions.updateNodePayloadByDataBlocks({updatedNodeInfo: nodeInfo, dataBlockId: dataBlocks.dataBlockId})
+                actions.updateNodePayloadByDataBlocks({updatedNodeInfo: nodeInfo, dataBlockId: block.dataBlockId, elements})
             }else {
                 // Else add new node
                 actions.addNode({
@@ -109,18 +113,26 @@ const CanvasModel =  {
         const result = await getDataSource();
         await actions.getAvailableDataSource();
         const dataCatalog = getState().availableDataSource;
-        const populatedDataSource = result.data.map((e,i)=> {
+
+        const DTOs = [];
+
+        result.data.forEach((e,i)=> {
             const data_catalog_item_id = e.data_catalog_item_id;
             const index = dataCatalog.findIndex((e, i) => {
                 if(e.id === data_catalog_item_id) return true
             });
-            return {
-                ...e,
+            const dto = new DataSourceDTO({
+                id: e.id,
+                dataCatalogItemId: e.data_catalog_item_id,
+                connectionParameters: e.connection_parameters,
                 logo: dataCatalog[index].logo,
                 name: dataCatalog[index].name,
-            }
+                connected: e.connected,
+            });
+            DTOs.push(dto);
         });
-        actions.setDataSource(populatedDataSource)
+
+        actions.setDataSource(DTOs)
     }),
 
     // Data Catalog
@@ -300,9 +312,21 @@ const columnAddressSplitter = (columnAddress) => {
 const getNodeTypeByDataCatalogId = (catalogId) => {
     switch (catalogId){
         case('postgres'):
-            return 'postgresDataSource'
+        case('bigquery'):
+            return 'dataBlocks'
         default:
             return 'transformation'
+    }
+}
+
+const getLabelByDataCatalogId = (catalogId) => {
+    switch (catalogId){
+        case('postgres'):
+            return 'Postgres'
+        case('bigquery'):
+            return 'Big Query'
+        default:
+            return 'Invalid Label'
     }
 }
 

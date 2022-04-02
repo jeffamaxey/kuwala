@@ -4,8 +4,9 @@ import ListSVG from "../../../icons/list.svg";
 import FolderSVG from "../../../icons/folder-solid.svg";
 import TableSVG from "../../../icons/table-solid.svg";
 import React, {useEffect, useState} from "react";
-import {action, useStoreActions, useStoreState} from "easy-peasy";
+import {useStoreActions, useStoreState} from "easy-peasy";
 import {generateParamsByDataSourceType} from "../../../utils/SchemaUtils";
+import {prePopulate} from "../../../utils/TableSelectorUtils";
 import {getColumns} from "../../../api/DataSourceApi";
 
 export default (
@@ -17,85 +18,22 @@ export default (
         setSchema,
         setIsColumnsDataPreviewLoading,
         setColumnsPreview,
+        dataSource,
     }) => {
-    const { selectedElement } = useStoreState(state => state.canvas);
-    const { insertOrRemoveSelectedColumnAddress } = useStoreActions(actions => actions.canvas);
-
-    const prePopulate = (raw, addressString) => {
-        return raw.map((el)=> {
-            return {
-                ...el,
-                selected: false,
-                columnAddress: `${addressString}@${el.column}`
-            }
-        });
-    }
-
     const tableSelectorOnClick = async ({addressString}) => {
         setSelectedTable(addressString);
         setIsColumnsDataPreviewLoading(true);
-        const params = generateParamsByDataSourceType(selectedElement.data.dataSource.data_catalog_item_id, addressString);
+        const params = generateParamsByDataSourceType(dataSource.dataCatalogItemId, addressString);
 
         try {
             const res = await getColumns({
-                id: selectedElement.data.dataSource.id,
+                id: dataSource.id,
                 params
             });
 
             if(res.status === 200) {
-                const cols = [{
-                    Header: "",
-                    id: "row",
-                    filterable: false,
-                    width: 50,
-                    Cell: (row) => {
-                        return (
-                            <div
-                                className={`
-                                flex flex-row justify-center items-center h-6 w-6 rounded-full
-                                border-2 border-kuwala-green 
-                                cursor-pointer
-                                select-none
-                            `}
-                                onClick={()=> {
-                                    insertOrRemoveSelectedColumnAddress(row.original.columnAddress)
-                                }}
-                            >
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    viewBox="0 0 448 512"
-                                    className={`
-                                fill-kuwala-green h-4 w-4
-                                ${row.original.selected ? '' : 'hidden'}
-                            `}
-                                >
-                                    <path d="M438.6 105.4C451.1 117.9 451.1 138.1 438.6 150.6L182.6 406.6C170.1 419.1 149.9 419.1 137.4 406.6L9.372 278.6C-3.124 266.1-3.124 245.9 9.372 233.4C21.87 220.9 42.13 220.9 54.63 233.4L159.1 338.7L393.4 105.4C405.9 92.88 426.1 92.88 438.6 105.4H438.6z"/>
-                                </svg>
-                            </div>
-                        );
-                    }
-                }, {
-                    Header: 'name',
-                    accessor: 'column',
-                    Cell: (row) => {
-                        return <div className={'font-light select-none'}>
-                            {row.value}
-                        </div>
-                    }
-                }, {
-                    Header: 'type',
-                    accessor: 'type',
-                    Cell: (row) => {
-                        return (
-                            <span className={'bg-gray-100 px-4 py-1 text-sm font-semibold text-gray-400 rounded-lg lowercase'}>
-                        {row.value}
-                    </span>
-                        );
-                    }
-                }]
-
                 setColumnsPreview({
-                    columns: cols,
+                    columns: [],
                     rows: prePopulate(res.data, addressString),
                 });
             }
@@ -106,11 +44,10 @@ export default (
     }
 
     const renderDataPreviewTree = () => {
-
         return (
             <>
                 <div className={'bg-kuwala-green w-full pl-4 py-2 text-white font-semibold'}>
-                    Database: {selectedElement.data.dataSource.connection_parameters[4].value}
+                    Database: {getDatabaseTitleValue()}
                 </div>
                 <div className={'overflow-y-scroll overflow-x-auto h-full w-full'}>
                     {isSchemaLoading
@@ -128,6 +65,13 @@ export default (
                 </div>
             </>
         )
+    }
+
+    const getDatabaseTitleValue = () => {
+        if(dataSource.dataCatalogItemId === 'postgres') {
+            return dataSource.connectionParameters[4].value
+        }
+        return 'Something else'
     }
 
     const renderSchemaBlock = (schema) => {

@@ -33,7 +33,7 @@ const Table = ({columns, data}) => {
     )
 }
 
-export default ({selectedTable, isTableDataPreviewLoading, tableDataPreview}) => {
+export default ({selectedTable, isTableDataPreviewLoading, tableDataPreview, wrapperClasses}) => {
     const renderDataPreviewBody = () => {
         return (
             <>
@@ -50,7 +50,13 @@ export default ({selectedTable, isTableDataPreviewLoading, tableDataPreview}) =>
                         </div>
                         :
                         <>
-                            <div className={'flex flex-col overflow-x-auto mx-8 mb-8 rounded-lg border-2 border-kuwala-green'}>
+                            <div
+                                className={
+                                    wrapperClasses ? wrapperClasses : `
+                                        'flex flex-col overflow-x-auto mx-8 mb-8 rounded-lg border-2 border-kuwala-green'
+                                    `
+                                }
+                            >
                                 <Table columns={tableDataPreview.columns} data={tableDataPreview.rows}/>
                             </div>
                         </>

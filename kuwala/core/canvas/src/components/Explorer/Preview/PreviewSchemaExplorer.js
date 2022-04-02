@@ -6,15 +6,25 @@ import TableSVG from "../../../icons/table-solid.svg";
 import React from "react";
 import {tableSelectionOnClick} from "../../../utils/TablePreviewUtils";
 import {useStoreState} from "easy-peasy";
+import DataSourceDTO from "../../../data/dto/DataSourceDTO"
 
-export default ({selectedTable, setSelectedTable, isSchemaLoading, schemaList, setSchema, setIsTableDataPreviewLoading, setTableDataPreview}) => {
-    const {selectedElement} = useStoreState(state => state.canvas);
+export default (
+    {
+        selectedTable,
+        setSelectedTable,
+        isSchemaLoading,
+        schemaList,
+        setSchema,
+        setIsTableDataPreviewLoading,
+        setTableDataPreview,
+        dataSource,
+    }) => {
 
     const renderDataPreviewTree = () => {
         return (
             <>
                 <div className={'bg-kuwala-green w-full pl-4 py-2 text-white font-semibold'}>
-                    Database: {selectedElement.data.dataSource.connection_parameters[4].value}
+                    Database: {getDatabaseTitleValue()}
                 </div>
                 <div className={'overflow-y-scroll overflow-x-auto h-full w-full'}>
                     {isSchemaLoading
@@ -32,6 +42,13 @@ export default ({selectedTable, setSelectedTable, isSchemaLoading, schemaList, s
                 </div>
             </>
         )
+    }
+
+    const getDatabaseTitleValue = () => {
+        if(dataSource.dataCatalogItemId === 'postgres') {
+            return dataSource.connectionParameters[4].value
+        }
+        return 'Something else'
     }
 
     const renderSchemaBlock = (schema) => {
@@ -129,9 +146,9 @@ export default ({selectedTable, setSelectedTable, isSchemaLoading, schemaList, s
                         addressString: tableKey,
                         setSelectedTable,
                         setIsTableDataPreviewLoading,
-                        dataCatalogItemId: selectedElement.data.dataSource.data_catalog_item_id,
+                        dataCatalogItemId: dataSource.dataCatalogItemId,
                         setTableDataPreview: setTableDataPreview,
-                        dataIndex: selectedElement.data.dataSource.id
+                        dataIndex: dataSource.id
                     })
                 }}
             >

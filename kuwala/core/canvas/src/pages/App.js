@@ -9,10 +9,8 @@ import Sidebar from "../components/Sidebar";
 import Header from "../components/Header";
 import DataView from "../components/DataView";
 import {useStoreActions, useStoreState} from 'easy-peasy';
-import DataSourceNode from "../components/Nodes/DataSourceNode";
 import TransformationNode from "../components/Nodes/TransformationNode";
-import VisualizationNode from "../components/Nodes/VisualizationNode";
-import PostgresDataSourceNode from "../components/Nodes/PostgresDataSourceNode";
+import DataBlocks from "../components/Nodes/DataBlocks";
 import {Link} from "react-router-dom";
 import NodeConfigModal from "../components/Modals/NodeConfigModal";
 
@@ -20,7 +18,7 @@ export default function () {
     const reactFlowWrapper = useRef(null);
     const [reactFlowInstance, setReactFlowInstance] = useState(null);
 
-    const {elements, selectedElement, newNodeInfo, dataSource, dataBlocks, openDataView} = useStoreState(state => state.canvas);
+    const {elements, selectedElement, dataSource, dataBlocks, openDataView} = useStoreState(state => state.canvas);
     const {showConfigModal} = useStoreState(state => state.common);
     const {
         addNode, setSelectedElement, removeNode, connectNodes, setOpenDataView, getDataSources,
@@ -74,10 +72,8 @@ export default function () {
                             setOpenDataView(false)
                         }}
                         nodeTypes={{
-                            dataSource: DataSourceNode,
                             transformation: TransformationNode,
-                            visualization: VisualizationNode,
-                            postgresDataSource: PostgresDataSourceNode,
+                            dataBlocks: DataBlocks,
                         }}
                         selectNodesOnDrag={false}
                         onLoad={onLoad}

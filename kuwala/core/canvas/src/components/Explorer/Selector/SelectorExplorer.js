@@ -2,9 +2,13 @@ import React, {useMemo} from "react";
 import ReactTable from "react-table-6";
 import "./selector-style.css";
 import {useStoreActions, useStoreState} from "easy-peasy";
+import {faCheck} from "@fortawesome/free-solid-svg-icons";
+import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 
 const Table = ({columns, data, selectedTable}) => {
     const { selectedAddressObj } = useStoreState(state => state.canvas);
+    const { insertOrRemoveSelectedColumnAddress } = useStoreActions(actions => actions.canvas);
+
     const addressArray = selectedTable.split('@');
     const schema = addressArray[0];
     const category = addressArray[1];
@@ -18,8 +22,58 @@ const Table = ({columns, data, selectedTable}) => {
         listOfSelectedColumn = []
     }
 
+    const prepareColumn = () => {
+        return [{
+            Header: "",
+            id: "row",
+            filterable: false,
+            width: 50,
+            Cell: (row) => {
+                return (
+                    <div
+                        className={`
+                                flex flex-row justify-center items-center h-6 w-6 rounded-full
+                                border-2 border-kuwala-green 
+                                cursor-pointer
+                                select-none
+                            `}
+                        onClick={()=> {
+                            insertOrRemoveSelectedColumnAddress(row.original.columnAddress)
+                        }}
+                    >
+                        <FontAwesomeIcon
+                            icon={faCheck}
+                            className={`
+                            h-4 w-4 text-kuwala-green
+                            ${row.original.selected ? '' : 'hidden'}
+                        `}
+                        />
+                    </div>
+                );
+            }
+        }, {
+            Header: 'name',
+            accessor: 'column',
+            Cell: (row) => {
+                return <div className={'font-light select-none'}>
+                    {row.value}
+                </div>
+            }
+        }, {
+            Header: 'type',
+            accessor: 'type',
+            Cell: (row) => {
+                return (
+                    <span className={'bg-gray-100 px-4 py-1 text-sm font-semibold text-gray-400 rounded-lg lowercase'}>
+                        {row.value}
+                    </span>
+                );
+            }
+        }]
+    }
+
     const memoizedCols = useMemo(()=> {
-        return columns
+        return prepareColumn()
     },[]);
 
     const populatedData = data.map((el)=> {

@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from "react";
 import {useStoreActions, useStoreState} from "easy-peasy";
 import {getColumns, getSchema, getTablePreview} from "../../api/DataSourceApi";
-import SchemaExplorer from '../Explorer/Preview/SchemaExplorer'
+import PreviewSchemaExplorer from '../Explorer/Preview/PreviewSchemaExplorer'
 import PreviewExplorer from "../Explorer/Preview/PreviewExplorer";
 import SelectorExplorer from "../Explorer/Selector/SelectorExplorer";
 import SelectorSchemaExplorer from "../Explorer/Selector/SelectorSchemaExplorer";
@@ -9,7 +9,7 @@ import "./node-config-modal.css"
 import {generateParamsByDataSourceType, preCreateSchemaExplorer, getDataDictionary, populateSchema} from '../../utils/SchemaUtils'
 import {populateAPIResult, columnAddressSplitter, tableAddressSplitter} from "../../utils/TableSelectorUtils";
 import {createNewDataBlock, updateDataBlockEntity} from "../../api/DataBlockApi";
-import qs from "qs";
+import DataBlocksDTO from "../../data/dto/DataBlocksDTO";
 
 export default ({isShow, configData}) => {
     const SELECTION_DISPLAY = 'selection';
@@ -26,6 +26,7 @@ export default ({isShow, configData}) => {
     const [isTableDataPreviewLoading, setIsTableDataPreviewLoading] = useState(false);
     const [isColumnsDataPreviewLoading, setIsColumnsDataPreviewLoading] = useState(false);
     const [selectorDisplay, setSelectorDisplay] = useState(SELECTION_DISPLAY);
+    const [isNodeSaveLoading, setIsNodeSaveLoading] = useState(false);
     const [tableDataPreview, setTableDataPreview] = useState({
         columns: [],
         rows: []
@@ -34,18 +35,18 @@ export default ({isShow, configData}) => {
         columns: [],
         rows: []
     });
-    const [isNodeSaveLoading, setIsNodeSaveLoading] = useState(false);
+    const [dataBlocksName, setDataBlocksName] = useState('-');
 
     useEffect( ()=> {
         fetchSchema().then(null)
         populateConfigByDataBlocks().then(null)
+        initNodeName()
     }, [selectedElement])
 
     useEffect(()=>{
         if(selectorDisplay === PREVIEW_DISPLAY && selectedTable !== null){
             prePopulatePreviewExplorer().then(null)
         }
-
     }, [selectorDisplay])
 
     const upsertDataBlocks = async () => {
@@ -56,15 +57,16 @@ export default ({isShow, configData}) => {
                 const selectedSource = selectedElement.data.dataSource;
                 const {schema, category, table} = columnAddressSplitter(selectedTable);
                 const newSelectedColumns = getSelectedColumnsOfCurrentTable();
+
                 // Insert new data blocks
                 if(blocks.dataBlockEntityId === null) {
                     const insertPayload = {
                         data_source_id: selectedSource.id,
-                        name: `${blocks.catalogItemType}_${table}`,
+                        name: dataBlocksName,
                         columns: newSelectedColumns,
                     }
 
-                    switch (selectedSource.data_catalog_item_id) {
+                    switch (selectedSource.dataCatalogItemId) {
                         case("bigquery"):
                             insertPayload.dataset_name = category
                             insertPayload.table_name = table
@@ -77,49 +79,77 @@ export default ({isShow, configData}) => {
                             return;
                     }
 
-                    const res = await createNewDataBlock(insertPayload);
 
-                    if(res.status === 200) {
-                        const configuredDataBlock = {
-                            ...insertPayload,
-                            ...blocks,
-                            data_source_id: selectedSource.id,
-                            name: `${blocks.catalogItemType}_${table}`,
-                            columns: newSelectedColumns,
-                            dataBlockEntityId: res.data.id,
-                            isConfigured: true,
-                            dataSource: selectedSource,
+                    try {
+                        const res = await createNewDataBlock(insertPayload);
+                        if(res.status === 200) {
+                            const dto = new DataBlocksDTO({
+                                tableName: insertPayload.table_name,
+                                schemaName: insertPayload.schema_name || null,
+                                dataSetName: insertPayload.dataset_name || null,
+                                dataBlockId: blocks.dataBlockId,
+                                dataBlockEntityId: res.data.id,
+                                isConfigured: true,
+                                dataSourceDTO: selectedSource,
+                                dataSourceId: selectedSource.id,
+                                columns: res.data.columns,
+                                name: res.data.name,
+                                dataCatalogType: selectedSource.dataCatalogItemId,
+                            });
+                            updateDataBlock(dto);
+                            toggleConfigModal();
+                        } else {
+                            alert('Failed to create a new blocks')
                         }
-                        updateDataBlock(configuredDataBlock);
-                        toggleConfigModal();
-                    } else {
-                        alert('Failed to create a new blocks')
+                    } catch (e){
+                        console.error(e);
                     }
 
                 } else {
                     // Update blocks
                     const updatePayload = {
                         id: blocks.dataBlockEntityId,
-                        name: `${blocks.catalogItemType}_${table}`,
-                        columns: newSelectedColumns,
-                        table_name: table,
-                        schema_name: schema,
+                        name: dataBlocksName,
+                        columns: newSelectedColumns
                     }
-                    const res = await updateDataBlockEntity(updatePayload);
-                    if(res.status === 200) {
-                        const configuredDataBlock = {
-                            ...updatePayload,
-                            ...blocks,
-                            data_source_id: selectedSource.id,
-                            name: `${blocks.catalogItemType}_${table}`,
-                            columns: newSelectedColumns,
-                            isConfigured: true,
-                            dataSource: selectedSource,
+
+                    switch (selectedSource.dataCatalogItemId) {
+                        case("bigquery"):
+                            updatePayload.dataset_name = category
+                            updatePayload.table_name = table
+                            break;
+                        case("postgres"):
+                            updatePayload.schema_name = schema
+                            updatePayload.table_name = table
+                            break;
+                        default:
+                            return;
+                    }
+
+                    try {
+                        const res = await updateDataBlockEntity(updatePayload);
+                        if(res.status === 200) {
+                            const dto = new DataBlocksDTO({
+                                tableName: updatePayload.table_name,
+                                schemaName: updatePayload.schema_name || null,
+                                dataSetName: updatePayload.dataset_name || null,
+                                dataBlockId: blocks.dataBlockId,
+                                dataBlockEntityId: res.data.id,
+                                isConfigured: true,
+                                dataSourceDTO: selectedSource,
+                                dataSourceId: selectedSource.id,
+                                columns: res.data.columns,
+                                name: res.data.name,
+                                dataCatalogType: selectedSource.dataCatalogItemId,
+                            });
+
+                            updateDataBlock(dto);
+                            toggleConfigModal();
+                        } else {
+                            alert('Failed to create a new blocks')
                         }
-                        updateDataBlock(configuredDataBlock);
-                        alert('Successfully created a configured data blocks');
-                    } else {
-                        alert('Failed to create a new blocks')
+                    } catch (e) {
+                        console.error(e);
                     }
                 }
             }
@@ -136,18 +166,26 @@ export default ({isShow, configData}) => {
         }
     }
 
+    const initNodeName = () => {
+        if(selectedElement) {
+            setDataBlocksName(selectedElement.data.dataBlocks.name)
+        }else {
+            setDataBlocksName('');
+        }
+    }
+
     const populateConfigByDataBlocks = async () => {
         if(selectedElement){
             if(selectedElement.data.dataBlocks) {
                 const blocks = selectedElement.data.dataBlocks;
-                if(blocks.schema_name && blocks.table_name) {
-                    const selectedAddress = `${blocks.schema_name}@tables@${blocks.table_name}`
+                if(blocks.schemaName && blocks.tableName) {
+                    const selectedAddress = `${blocks.schemaName}@tables@${blocks.tableName}`
                     setSelectedTable(selectedAddress)
                     setIsColumnsDataPreviewLoading(true)
                     setIsSchemaLoading(true)
                     const schemaRes = await getSchema(selectedElement.data.dataSource.id);
                     if(schemaRes.status === 200) {
-                        const populatedSchema = populateSchema(schemaRes.data);
+                        const populatedSchema = populateSchema(schemaRes.data, selectedElement.data.dataSource);
                         preCreateSchemaExplorer({
                             schemaList: populatedSchema,
                             addressString: selectedAddress,
@@ -155,7 +193,7 @@ export default ({isShow, configData}) => {
                         })
                     }
                     const params = generateParamsByDataSourceType(
-                        selectedElement.data.dataSource.data_catalog_item_id,
+                        selectedElement.data.dataSource.dataCatalogItemId,
                         selectedAddress
                     );
                     const res = await getColumns({
@@ -183,7 +221,7 @@ export default ({isShow, configData}) => {
             setIsSchemaLoading(true)
             const res = await getSchema(selectedElement.data.dataSource.id);
             if(res.status === 200) {
-                const populatedSchema = populateSchema(res.data);
+                const populatedSchema = populateSchema(res.data, selectedElement.data.dataSource);
                 setSchema(populatedSchema)
             }
         }
@@ -223,7 +261,11 @@ export default ({isShow, configData}) => {
                         <div className={'flex flex-row items-center'}>
                             <label className={'font-semibold'}>Name:</label>
                             <input
-                                type="text" name="name" value={`${selectedElement.data.dataBlocks.name || '-'}`} disabled={true}
+                                type="text"
+                                value={`${dataBlocksName}`}
+                                onChange={(e) => {
+                                    setDataBlocksName(e.target.value)
+                                }}
                                 className={`
                                     form-control
                                     block
@@ -254,7 +296,7 @@ export default ({isShow, configData}) => {
         if (!selectedElement) {
             return (
                 <div>
-                    Undefined data source, something is wrong.
+                    Undefined data source, try to re open the node configuration.
                 </div>
             )
         } else {
@@ -287,11 +329,13 @@ export default ({isShow, configData}) => {
                     columnsPreview={columnsPreview}
                     setColumnsPreview={setColumnsPreview}
                     setIsColumnsDataPreviewLoading={setIsColumnsDataPreviewLoading}
+
+                    dataSource={selectedElement.data.dataSource}
                 />
             )
         } else if (displayType === PREVIEW_DISPLAY) {
             return (
-                <SchemaExplorer
+                <PreviewSchemaExplorer
                     isSchemaLoading={isSchemaLoading}
                     schemaList={schemaList}
                     selectedTable={selectedTable}
@@ -300,6 +344,8 @@ export default ({isShow, configData}) => {
 
                     setTableDataPreview={setTableDataPreview}
                     setIsTableDataPreviewLoading={setIsTableDataPreviewLoading}
+
+                    dataSource={selectedElement.data.dataSource}
                 />
             )
         }
@@ -381,7 +427,7 @@ export default ({isShow, configData}) => {
     const prePopulatePreviewExplorer = async () => {
         setIsTableDataPreviewLoading(true)
 
-        const params = generateParamsByDataSourceType(selectedElement.data.dataSource.data_catalog_item_id, selectedTable)
+        const params = generateParamsByDataSourceType(selectedElement.data.dataSource.dataCatalogItemId, selectedTable)
         try {
             const {schema, table, category} = tableAddressSplitter(selectedTable);
             // Set selected address
@@ -390,7 +436,7 @@ export default ({isShow, configData}) => {
                 selectedCols = selectedAddressObj[schema][category][table]
             } catch (e) {
                 selectedCols = [];
-                console.log('No selected columns')
+                console.info('No selected columns')
             }
 
             if(selectedCols.length > 0) {

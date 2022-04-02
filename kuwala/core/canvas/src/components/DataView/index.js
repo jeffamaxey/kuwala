@@ -3,10 +3,8 @@ import {useStoreActions, useStoreState} from "easy-peasy";
 import ReactTable from "react-table-6";
 import {getDataBlockPreview} from "../../api/DataBlockApi";
 import {getDataDictionary} from "../../utils/SchemaUtils";
-import Tab from "tw-elements/dist/src/js/bs/src/tab";
 
 const Table = ({columns, data}) => {
-
     const memoizedCols = useMemo(()=> {
         return columns
     },[]);
@@ -18,7 +16,7 @@ const Table = ({columns, data}) => {
     let pageSize;
     if (data.length >= 300) pageSize = 300
     else if (data.length <= 20) pageSize = 20;
-    else pageSize = data.length
+    else pageSize = data.length;
 
     return (
         <ReactTable

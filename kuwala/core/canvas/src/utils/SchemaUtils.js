@@ -1,8 +1,8 @@
 import {getTablePreview} from "../api/DataSourceApi";
 import React from "react";
 
-export const populateSchema = (rawSchema) => {
-    switch (rawSchema) {
+export const populateSchema = (rawSchema, dataSourceDTO) => {
+    switch (dataSourceDTO.dataCatalogItemId) {
         case 'postgres':
             return rawSchema.map((schema) => {
                 return {

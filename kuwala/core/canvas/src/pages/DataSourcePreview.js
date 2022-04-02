@@ -1,59 +1,25 @@
-import React, {useEffect, useMemo, useState} from "react";
+import React, {useEffect, useState} from "react";
 import Header from "../components/Header";
 import {useLocation, Link, useNavigate} from "react-router-dom";
-import {useStoreActions, useStoreState} from "easy-peasy";
-import ReactTable from 'react-table-6';
+import {useStoreActions} from "easy-peasy";
 import "react-table-6/react-table.css";
 import "./styles/data-source-preview-table.style.css";
 
-import ListSVG from "../icons/list.svg"
-import ArrowRight from "../icons/arrow-right-solid.svg"
-import ArrowDown from "../icons/arrow-down-solid.svg"
-import FolderSVG from "../icons/folder-solid.svg"
-import TableSVG from "../icons/table-solid.svg"
-import {getSchema, getTablePreview} from "../api/DataSourceApi";
+import PreviewExplorer from '../components/Explorer/Preview/PreviewExplorer';
+import PreviewSchemaExplorer from '../components/Explorer/Preview/PreviewSchemaExplorer';
+
+import {getSchema} from "../api/DataSourceApi";
 import {createNewDataBlock} from "../api/DataBlockApi";
 import {v4} from "uuid";
-
-const Table = ({columns, data}) => {
-    const memoizedCols = useMemo(()=> {
-        return columns
-    },[]);
-
-    const memoizedRows = useMemo(()=> {
-        return data
-    },[]);
-
-    let pageSize;
-    if (data.length >= 300) pageSize = 300
-    else if (data.length <= 20) pageSize = 20;
-    else pageSize = data.length
-
-    return (
-        <ReactTable
-            data={memoizedRows}
-            columns={memoizedCols}
-            defaultPageSize={pageSize}
-            showPagination={false}
-            showPaginationTop={false}
-            showPaginationBottom={false}
-            showPageSizeOptions={false}
-            style={{
-                height: "100%",
-                overFlowX: 'hidden',
-            }}
-            className="-striped -highlight"
-        />
-    )
-}
+import DataSourceDTO from "../data/dto/DataSourceDTO";
+import DataBlocksDTO from "../data/dto/DataBlocksDTO";
+import {populateSchema} from "../utils/SchemaUtils";
 
 export default () => {
     const navigate = useNavigate();
     const location = useLocation()
-    const dataIndex = location.state.index
-    const {dataSource} = useStoreState((state) => state.canvas);
     const {addDataBlock, addDataSourceToCanvas} = useStoreActions((actions) => actions.canvas);
-    const selectedSource = dataSource.filter((el) => el.id === dataIndex)[0];
+    const selectedSource = new DataSourceDTO({...location.state.dataSourceDTO})
     const [selectedTable, setSelectedTable] = useState(null)
     const [isTableDataPreviewLoading, setIsTableDataPreviewLoading] = useState(false)
     const [schemaList, setSchema] = useState([])
@@ -65,14 +31,14 @@ export default () => {
     })
 
     useEffect( ()=> {
-        fetchSchema().then(null)
+        fetchSchema(selectedSource).then(null)
     }, [])
 
-    async function fetchSchema() {
+    async function fetchSchema(selectedSource) {
         setIsSchemaLoading(true)
-        const res = await getSchema(dataIndex);
+        const res = await getSchema(selectedSource.id);
         if(res.status === 200) {
-            const populatedSchema = populateSchema(res.data);
+            const populatedSchema = populateSchema(res.data, selectedSource);
             setSchema(populatedSchema)
         }
         setIsSchemaLoading(false)
@@ -88,11 +54,11 @@ export default () => {
         const columnsArray = tableDataPreview.columns.slice(1).map((el) => `${el.Header}`);
         const payload = {
             data_source_id: selectedSource.id,
-            name: `${selectedSource.data_catalog_item_id}_${selectedAddress[2]}`,
+            name: `${selectedSource.dataCatalogItemId}_${selectedAddress[2]}`,
             columns: columnsArray,
         }
 
-        switch (selectedSource.data_catalog_item_id) {
+        switch (selectedSource.dataCatalogItemId) {
             case("bigquery"):
                 payload.dataset_name = selectedAddress[1]
                 payload.table_name = selectedAddress[2]
@@ -108,15 +74,20 @@ export default () => {
         try {
             const res = await createNewDataBlock(payload);
             if(res.status === 200) {
-                const configuredDataBlock = {
-                    ...payload,
-                    catalogItemType : selectedSource.data_catalog_item_id,
-                    dataSource: selectedSource,
+                const dto = new DataBlocksDTO({
+                    tableName: payload.table_name,
+                    schemaName: payload.schema_name,
+                    dataSetName: null,
                     dataBlockId: v4(),
                     dataBlockEntityId: res.data.id,
                     isConfigured: true,
-                }
-                addDataBlock(configuredDataBlock);
+                    dataSourceDTO: selectedSource,
+                    dataSourceId: selectedSource.id,
+                    columns: res.data.columns,
+                    name: payload.name,
+                    dataCatalogType: selectedSource.dataCatalogItemId,
+                });
+                addDataBlock(dto);
                 navigate('/')
             } else {
                 alert('Something went wrong when adding data blocks');
@@ -127,168 +98,6 @@ export default () => {
             console.error(e)
         }
         setIsAddToCanvasLoading(false);
-    }
-
-    const populateSchema = (rawSchema) => {
-        switch (selectedSource.data_catalog_item_id) {
-            case 'postgres':
-                return rawSchema.map((schema) => {
-                    return {
-                        ...schema,
-                        isOpen: false,
-                        categories: schema.categories.map((category)=>{
-                            return {
-                                ...category,
-                                isOpen: false
-                            }
-                        })
-                    }
-                })
-            case 'bigquery':
-                return rawSchema.map((schema) => {
-                    return {
-                        ...schema,
-                        schema: schema.project,
-                        isOpen: false,
-                        categories: schema.datasets.map((data)=>{
-                            return {
-                                ...data,
-                                category: data.dataset,
-                                isOpen: false
-                            }
-                        })
-                    }
-                })
-            default:
-                return rawSchema
-        }
-    }
-
-    const renderTableDataPreview = () => {
-        return (
-            <div className={'overflow-x-auto'}>
-                <Table columns={tableDataPreview.columns} data={tableDataPreview.rows}/>
-            </div>
-        )
-    }
-
-    const tableSelectionOnlick = async (addressString) => {
-        setSelectedTable(addressString)
-        setIsTableDataPreviewLoading(true)
-        const params = generateParamsByDataSourceType(selectedSource.data_catalog_item_id, addressString)
-        const res = await getTablePreview({
-            id: dataIndex,
-            params
-        });
-
-        if(res.status === 200) {
-            let cols = res.data.columns.map((el,i)=>{
-                return {
-                    Header: el,
-                    accessor: el,
-                }
-            });
-
-            cols = [{
-                Header: "#",
-                id: "row",
-                filterable: false,
-                width: 50,
-                Cell: (row) => {
-                    return <div>{row.index+1}</div>;
-                }
-            }, ...cols]
-
-            setTableDataPreview({
-                columns: cols,
-                rows: getDataDictionary(res.data.rows, res.data.columns),
-            });
-        }
-        setIsTableDataPreviewLoading(false)
-    }
-
-    const getDataDictionary = (data, headers) => {
-        let dictionary = [];
-        data.map((row,i) => {
-            let obj = {};
-            row.map((cell, j) => {
-                obj[headers[j]] = typeof data[i][j] === 'object' ? JSON.stringify(data[i][j]) : data[i][j];
-            })
-            dictionary.push(obj)
-        })
-        return dictionary;
-    };
-
-    const generateParamsByDataSourceType = (type, addressString) => {
-        const arr = addressString.split('@')
-        switch (type){
-            case "postgres":
-                return {
-                    schema_name: arr[0],
-                    table_name: arr[2],
-                    limit_columns: 200,
-                    limit_rows: 300,
-                }
-            case "bigquery":
-                return {
-                    project_name: arr[0],
-                    dataset_name: arr[1],
-                    table_name: arr[2],
-                    limit_columns: 200,
-                    limit_rows: 300,
-                }
-            default: return ""
-        }
-    }
-
-    const renderDataPreviewHeader = () => {
-        return (
-            <>
-                <div className={'bg-kuwala-green w-full pl-4 py-2 text-white font-semibold'}>
-                    Database: Kuwala
-                </div>
-                <div className={'overflow-y-scroll overflow-x-auto h-full w-full'}>
-                    {isSchemaLoading
-                        ?
-                        <div className="flex flex-col w-full h-full justify-center items-center">
-                            <div
-                                className="spinner-border animate-spin inline-block w-16 h-16 border-4 text-kuwala-green rounded-full"
-                                role="status">
-                                <span className="visually-hidden">Loading...</span>
-                            </div>
-                        </div>
-                        :
-                        schemaList.map(el => renderSchemaBlock(el))
-                    }
-                </div>
-            </>
-        )
-    }
-
-    const renderDataPreviewBody = () => {
-        return (
-            <>
-                {selectedTable
-                    ?
-                    isTableDataPreviewLoading
-                        ?
-                        <div className="flex flex-col w-full h-full justify-center items-center rounded-tr-lg">
-                            <div
-                                className="spinner-border animate-spin inline-block w-24 h-24 border-4 text-kuwala-green rounded-full"
-                                role="status">
-                                <span className="visually-hidden">Loading...</span>
-                            </div>
-                        </div>
-                        :
-                        renderTableDataPreview()
-                    :
-                    <div className="flex flex-col w-full h-full text-xl font-light justify-center items-center rounded-tr-lg">
-                        <p>Select a table from the <span className={'text-kuwala-green'}>left</span></p>
-                        <p>to preview the data</p>
-                    </div>
-                }
-            </>
-        )
     }
 
     const renderDataPreview = () => {
@@ -302,162 +111,28 @@ export default () => {
             return (
                 <div className={'flex flex-row bg-white border-2 border-kuwala-green rounded-t-lg h-full w-full'}>
                     <div className={'flex flex-col bg-white w-3/12 border border-kuwala-green'}>
-                        {renderDataPreviewHeader()}
+                        <PreviewSchemaExplorer
+                            selectedTable={selectedTable}
+                            setTableDataPreview={setTableDataPreview}
+                            setSelectedTable={setSelectedTable}
+                            setSchema={setSchema}
+                            isSchemaLoading={isSchemaLoading}
+                            schemaList={schemaList}
+                            setIsTableDataPreviewLoading={setIsTableDataPreviewLoading}
+                            dataSourceDTO={selectedSource}
+                        />
                     </div>
                     <div className={'flex flex-col bg-white w-9/12 rounded-tr-lg'}>
-                        {renderDataPreviewBody()}
+                        <PreviewExplorer
+                            selectedTable={selectedTable}
+                            tableDataPreview={tableDataPreview}
+                            isTableDataPreviewLoading={isTableDataPreviewLoading}
+                            wrapperClasses={`flex flex-col overflow-x-auto`}
+                        />
                     </div>
                 </div>
             )
         }
-    }
-
-    const toggleTreeItem = (addressString) => {
-        const arr = addressString.split('@')
-        const schemaAddress = arr[0]
-        const categoryAddress = arr[1]
-
-        let tempSchema;
-        if(categoryAddress && schemaAddress) {
-            tempSchema = schemaList.map((el) => {
-                if (el.schema === schemaAddress) {
-                    return {
-                        ...el,
-                        categories: el.categories.map((cat) => {
-                            if (cat.category === categoryAddress){
-                                cat.isOpen = !cat.isOpen
-                            }
-                            return cat
-                        })
-                    }
-                }
-                return el
-            })
-        } else {
-            tempSchema = schemaList.map((el) => {
-                if (el.schema === schemaAddress){
-                    el.isOpen = !el.isOpen
-                    if (el.isOpen === false) {
-                        return {
-                            ...el,
-                            categories: el.categories.map((cat) => {
-                                cat.isOpen = false
-                                return cat
-                            })
-                        }
-                    }
-                }
-                return el
-            })
-        }
-        setSchema(tempSchema)
-    }
-
-    const renderSchemaBlock = (schema) => {
-        return (
-            // PARENT CONTAINER
-            <div className={'flex flex-col w-full bg-white'}>
-                {/* SCHEMA */}
-                {generateSchemaParent(schema)}
-                {schema.isOpen ? generateCategories(schema.categories, schema.schema) : null}
-            </div>
-        )
-    }
-
-    const generateSchemaParent = (schemaObject) => {
-        return (
-            <div
-                className={'flex flex-row items-center pl-4 pr-8 py-2 cursor-pointer w-full'}
-                onClick={() => {
-                    toggleTreeItem(schemaObject.schema)
-                }}
-            >
-                <span className={'mr-4'}>
-                    <img
-                        src={schemaObject.isOpen ? ArrowDown : ArrowRight}
-                        style={{minWidth: 16, height: 16}}
-                    />
-                </span>
-                <span className={'mr-4'}>
-                    <img
-                        src={ListSVG}
-                        style={{minWidth: 16, height: 16}}
-                    />
-                </span>
-                <span className={'font-semibold text-md'}>
-                    {schemaObject.schema}
-                </span>
-            </div>
-        )
-    }
-
-    const generateCategories = (categories, parentSchema) => {
-        return (
-            categories.map((el, i) => {
-                const currentKey = `${parentSchema}@${el.category}`
-                return (
-                    <div
-                        key={currentKey}
-                        className={`cursor-pointer min-w-max`}
-                    >
-                        <div
-                            className={'flex flex-row items-center pl-12 pr-8 py-2 bg-white w-full'}
-                             onClick={() => {
-                                 toggleTreeItem(currentKey)
-                             }}
-                        >
-                        <span className={'mr-4 cursor-pointer'}>
-                            <img
-                                src={el.isOpen ? ArrowDown : ArrowRight}
-                                style={{minWidth: 16, height: 16}}
-                            />
-                        </span>
-                            <span className={'mr-4'}>
-                            <img
-                                src={FolderSVG}
-                                style={{minWidth: 16, height: 16}}
-                            />
-                        </span>
-                            <span className={'font-semibold text-md'}>
-                            {el.category}
-                        </span>
-                        </div>
-                        {el.isOpen ?
-                            el.tables.map(el => generateCategoryTables(el, currentKey))
-                            : null
-                        }
-                    </div>
-                )
-            })
-        )
-    }
-
-    const generateCategoryTables = (tableName, parent) => {
-        const tableKey = `${parent}@${tableName}`
-        return (
-            <div
-                className={`
-                    flex flex-row items-center pl-20 pr-8 py-2
-                    cursor-pointer
-                    min-w-max
-                    ${tableKey === selectedTable ? `bg-kuwala-green text-white` : `bg-white text-black`}
-                `}
-                key={tableKey}
-                onClick={()=>{
-                    tableSelectionOnlick(tableKey)
-                }}
-            >
-                <span className={'mr-4'}>
-                    <img
-                        src={TableSVG}
-                        style={{minWidth: 16, minHeight: 16}}
-                    />
-                </span>
-                <span className={'font-semibold text-md w-full'}>
-                    {tableName}
-                </span>
-            </div>
-        )
     }
 
     const renderSelectedSourceHeader = () => {
@@ -525,15 +200,15 @@ export default () => {
                         {
                             isAddToCanvasLoading
                                 ?
-                                (
-                                    <div
-                                        className="spinner-border animate-spin inline-block w-4 h-4 border-4 rounded-full"
-                                        role="status">
-                                        <span className="visually-hidden">Loading...</span>
-                                    </div>
-                                )
+                                    (
+                                        <div
+                                            className="spinner-border animate-spin inline-block w-4 h-4 border-4 rounded-full"
+                                            role="status">
+                                            <span className="visually-hidden">Loading...</span>
+                                        </div>
+                                    )
                                 :
-                                'Add to Canvas'
+                                    'Add to Canvas'
                         }
                     </button>
                 </div>

@@ -4,8 +4,8 @@ import {useNavigate, Link} from "react-router-dom";
 import {useStoreActions, useStoreState} from "easy-peasy";
 import "./styles/data-pipeline-management.style.css";
 import AddSVG from '../icons/add_sources_green.png';
-import {createNewDataBlock} from "../api/DataBlockApi"
 import {v4} from "uuid";
+import DataBlocksDTO from "../data/dto/DataBlocksDTO";
 
 export default () => {
     const navigate = useNavigate();
@@ -21,31 +21,21 @@ export default () => {
         if(!selectedSource) return
         setIsAddToCanvasLoading(true);
 
-        const unConfiguredBlockPayload = {
-            data_source_id: selectedSource.id,
-            name: `${selectedSource.data_catalog_item_id}`,
-            columns: [],
-            catalogItemType : selectedSource.data_catalog_item_id,
-            dataSource: selectedSource,
-            dataBlockId: v4(), // Used to track nodes & table selection
-            dataBlockEntityId: null, // This will be filled with entity id from database
+        const dto = new DataBlocksDTO({
+            tableName: null,
+            schemaName: null,
+            dataSetName: null,
+            dataBlockId: v4(),
+            dataBlockEntityId: null,
             isConfigured: false,
-        }
+            dataSourceDTO: selectedSource,
+            dataSourceId: selectedSource.id,
+            columns: [],
+            name: `${selectedSource.dataCatalogItemId}`,
+            dataCatalogType: selectedSource.dataCatalogItemId,
+        });
 
-        switch (selectedSource.data_catalog_item_id) {
-            case("bigquery"):
-                unConfiguredBlockPayload.dataset_name = null
-                unConfiguredBlockPayload.table_name = null
-                break;
-            case("postgres"):
-                unConfiguredBlockPayload.schema_name = null
-                unConfiguredBlockPayload.table_name = null
-                break;
-            default:
-                return;
-        }
-
-        addDataBlock(unConfiguredBlockPayload);
+        addDataBlock(dto);
         navigate('/')
         setIsAddToCanvasLoading(false);
     }
@@ -71,7 +61,7 @@ export default () => {
                         className={`bg-grey-light flex flex-col items-center overflow-y-auto w-full`}
                         style={{height: '100rem'}}
                     >
-                        {dataSource.map((e, i)=>{
+                        {dataSource.map((dto, i)=>{
                         return (
                             <tr
                                 key={i} className={'bg-white border-2 text-center flex w-full'}
@@ -79,20 +69,20 @@ export default () => {
                                 <td className={'py-6 flex-1'}>
                                     <div className={'flex flex-row ml-8 items-center'}>
                                         <img
-                                            src={e.logo}
+                                            src={dto.logo}
                                             style={{height: 48, width: 48}}
                                         />
-                                        <label className={'ml-10 text-lg font-medium'}>{e.name}</label>
+                                        <label className={'ml-10 text-lg font-medium'}>{dto.name}</label>
                                     </div>
                                 </td>
                                 <td className={'py-6 flex-1'}>
                                 <span
                                     className={`
                                         px-4 py-2 rounded-xl text-white font-semibold
-                                        ${e.connected ? 'bg-kuwala-green' : 'bg-red-400'}
+                                        ${dto.connected ? 'bg-kuwala-green' : 'bg-red-400'}
                                     `}
                                 >
-                                    {e.connected ? 'Active' : 'Inactive'}
+                                    {dto.connected ? 'Active' : 'Inactive'}
                                 </span>
                                 </td>
                                 <td className={'py-6 space-x-2 flex-1'}>
@@ -100,21 +90,21 @@ export default () => {
                                         <Link
                                             to={'/data-source-config'}
                                             state={{
-                                                index: e.id,
+                                                dataSourceDTO: dto,
                                             }}
                                             className={'flex bg-white px-4 py-2 text-white rounded-md border-2 border-kuwala-green hover:bg-kuwala-bg-gray items-center '}
                                         >
                                             <span className={'text-kuwala-green font-semibold'}>Configure</span>
                                         </Link>
                                         <Link
-                                            disabled={e.connected}
+                                            disabled={dto.connected}
                                             to={'/data-source-preview'}
                                             state={{
-                                                index: e.id,
+                                                dataSourceDTO: dto,
                                             }}
                                             className={`
                                                 bg-white text-kuwala-green px-4 py-2 rounded-md border-2 border-kuwala-green hover:bg-kuwala-bg-gray
-                                            ${e.connected ? '' : 'hidden'}
+                                            ${dto.connected ? '' : 'hidden'}
                                         `}
                                         >
                                             <span className={'text-kuwala-green font-semibold'}>Preview Data</span>
@@ -124,12 +114,12 @@ export default () => {
                                                 bg-kuwala-green text-white px-4 py-2 rounded
                                                 font-semibold
                                                 hover:bg-kuwala-light-green 
-                                                ${e.connected ? '' : 'hidden'}
+                                                ${dto.connected ? '' : 'hidden'}
                                             `}
                                             disabled={isAddToCanvasLoading}
                                             onClick={async ()=>{
-                                                addDataSourceToCanvas(e)
-                                                await addToCanvas(e)
+                                                addDataSourceToCanvas(dto)
+                                                await addToCanvas(dto)
                                             }}
                                         >
                                             <span className={'text-white w-full py-2'}>
@@ -163,12 +153,12 @@ export default () => {
             <main className={'flex flex-col justify-between h-full w-full bg-kuwala-bg-gray'}>
                 <div className={'px-20'}>
                     <div className={'flex flex-col mt-8'}>
-                    <span className={'font-semibold text-3xl'}>
-                        Data Pipeline Management
-                    </span>
+                        <span className={'font-semibold text-3xl'}>
+                            Data Pipeline Management
+                        </span>
                         <span className={'font-light text-xl mt-3'}>
-                        Configure and manage your selected data sources
-                    </span>
+                            Configure and manage your selected data sources
+                        </span>
                     </div>
 
                     {/* Data Sources Container*/}
