@@ -6,7 +6,6 @@ const CommonModel =  {
     notificationOpen: false,
     showConfigModal: false,
 
-
     toggleNotification: action((state) => {
         state.notificationOpen = !state.notificationOpen
     }),

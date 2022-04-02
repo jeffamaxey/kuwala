@@ -20,6 +20,7 @@ export default ({isShow, configData}) => {
     } = useStoreActions(actions => actions.canvas);
     const {toggleConfigModal} = useStoreActions(actions => actions.common);
     const {selectedElement, selectedAddressObj} = useStoreState(state => state.canvas);
+    const {showConfigModal} = useStoreState(state => state.common);
     const [schemaList, setSchema] = useState([])
     const [isSchemaLoading, setIsSchemaLoading] = useState(false);
     const [selectedTable, setSelectedTable] = useState(null);
@@ -39,13 +40,20 @@ export default ({isShow, configData}) => {
 
     useEffect( ()=> {
         fetchSchema().then(null)
-        populateConfigByDataBlocks().then(null)
         initNodeName()
     }, [selectedElement])
+
+    useEffect(() => {
+        if(selectedElement) {
+            populateConfigByDataBlocks().then(null)
+        }
+    }, [showConfigModal])
 
     useEffect(()=>{
         if(selectorDisplay === PREVIEW_DISPLAY && selectedTable !== null){
             prePopulatePreviewExplorer().then(null)
+        } else if (selectorDisplay === SELECTION_DISPLAY && selectedTable !== null) {
+
         }
     }, [selectorDisplay])
 
@@ -78,7 +86,6 @@ export default ({isShow, configData}) => {
                         default:
                             return;
                     }
-
 
                     try {
                         const res = await createNewDataBlock(insertPayload);
@@ -529,7 +536,9 @@ export default ({isShow, configData}) => {
                                     className={`
                                         bg-kuwala-green px-6 py-2 font-semibold text-white rounded-lg cursor-pointer
                                     `}
-                                    onClick={toggleConfigModal}
+                                    onClick={() => {
+                                        toggleConfigModal()
+                                    }}
                                 >Back</span>
                         </div>
                         <div className={'flex flex-row items-center'}>

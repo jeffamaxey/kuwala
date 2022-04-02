@@ -5,8 +5,6 @@ import FolderSVG from "../../../icons/folder-solid.svg";
 import TableSVG from "../../../icons/table-solid.svg";
 import React from "react";
 import {tableSelectionOnClick} from "../../../utils/TablePreviewUtils";
-import {useStoreState} from "easy-peasy";
-import DataSourceDTO from "../../../data/dto/DataSourceDTO"
 
 export default (
     {

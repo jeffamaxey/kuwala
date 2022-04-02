@@ -119,7 +119,7 @@ export default () => {
                             isSchemaLoading={isSchemaLoading}
                             schemaList={schemaList}
                             setIsTableDataPreviewLoading={setIsTableDataPreviewLoading}
-                            dataSourceDTO={selectedSource}
+                            dataSource={selectedSource}
                         />
                     </div>
                     <div className={'flex flex-col bg-white w-9/12 rounded-tr-lg'}>
