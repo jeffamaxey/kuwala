@@ -33,7 +33,7 @@ def get_all_items(db: Session = Depends(get_db)):
 
 @router.post("/select", response_model=list[DataSource])
 def select_items(items: DataCatalogSelect, db: Session = Depends(get_db)):
-    data_sources = list()
+    data_sources = []
 
     for item_id in items.item_ids:
         data_catalog_item = get_data_catalog_item(db=db, data_catalog_item_id=item_id)

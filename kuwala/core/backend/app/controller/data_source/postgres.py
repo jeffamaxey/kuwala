@@ -48,7 +48,7 @@ def send_query(
     cursor.execute(query)
 
     result = cursor.fetchall()
-    header = tuple([desc[0] for desc in cursor.description])
+    header = tuple(desc[0] for desc in cursor.description)
     result = [header] + result
 
     cursor.close()
@@ -185,11 +185,11 @@ def get_table_preview(
         )
 
         columns_string = functools.reduce(
-            lambda c1, c2: f"{c1}, {c2}", columns[0][0:limit_columns]
+            lambda c1, c2: f"{c1}, {c2}", columns[0][:limit_columns]
         )
     else:
         columns_string = functools.reduce(
-            lambda c1, c2: f"{c1}, {c2}", columns[0:limit_columns]
+            lambda c1, c2: f"{c1}, {c2}", columns[:limit_columns]
         )
 
     rows_query = f"""

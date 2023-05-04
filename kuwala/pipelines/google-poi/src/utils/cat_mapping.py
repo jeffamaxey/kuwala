@@ -6,14 +6,11 @@ from typing import List
 def get_category(tag: str, cat_data: dict) -> str:
     kuwala_cats = [
         cat_data[cat]["category"]
-        for cat in cat_data.keys()
+        for cat in cat_data
         if any(tag == x for x in cat_data[cat]["tags"])
     ]
 
-    if not kuwala_cats:
-        return "misc"
-
-    return kuwala_cats[0]
+    return kuwala_cats[0] if kuwala_cats else "misc"
 
 
 def complete_categories(poi_cat: List[str]) -> dict:

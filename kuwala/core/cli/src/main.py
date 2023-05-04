@@ -88,11 +88,10 @@ def launch_jupyter_notebook():
 
     if launched_jupyter and connected_to_db:
         logging.info("Successfully launched database and Jupyter!")
-    else:
-        if not connected_to_db:
-            logging.error("Couldn't connect to database.")
-        if not launched_jupyter:
-            logging.error("Couldn't launch Jupyter.")
+    if not connected_to_db:
+        logging.error("Couldn't connect to database.")
+    if not launched_jupyter:
+        logging.error("Couldn't launch Jupyter.")
 
     print(
         "\n############################################################################"
@@ -114,9 +113,7 @@ if __name__ == "__main__":
     )
     logging.info("Kuwala CLI is ready to rumble")
 
-    demo = select_demo()
-
-    if demo:
+    if demo := select_demo():
         download_demo()
     else:
         pipelines = select_pipelines()
@@ -129,7 +126,7 @@ if __name__ == "__main__":
             "You can lean back now and wait for the pipelines to do their magic."
         )
         logging.info(
-            f'Starting {str(", ").join(pipelines)} {"pipelines" if len(pipelines) > 1 else "pipeline"}'
+            f'Starting {", ".join(pipelines)} {"pipelines" if len(pipelines) > 1 else "pipeline"}'
         )
 
         run_pipelines(pipelines, selected_region)

@@ -11,12 +11,10 @@ from ..utils.encoder import list_of_dicts_to_dict
 
 
 def get_data_source(db: Session, data_source_id: str) -> models.DataSource:
-    data_source = db.get(models.DataSource, data_source_id)
-
-    if not data_source:
+    if data_source := db.get(models.DataSource, data_source_id):
+        return data_source
+    else:
         raise HTTPException(status_code=404, detail="Data source not found")
-
-    return data_source
 
 
 def get_data_sources(db: Session) -> [models.DataSource]:

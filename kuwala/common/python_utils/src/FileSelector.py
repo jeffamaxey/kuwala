@@ -57,15 +57,13 @@ def select_local_country(directory):
 def select_local_osm_file(directory):
     country_path = select_local_country(directory)
 
-    if os.path.isdir(country_path + "/parquet/osm_parquetizer"):
+    if os.path.isdir(f"{country_path}/parquet/osm_parquetizer"):
         return country_path
 
     regions = os.listdir(country_path)
-    region = questionary.select(
+    if region := questionary.select(
         "Which region are you interested in?", choices=regions
-    ).ask()
-
-    if region:
+    ).ask():
         return f"{country_path}/{region}"
 
 
@@ -129,7 +127,7 @@ def select_osm_file():
     file = dict(url=None, continent=continent, country=None, country_region=None)
 
     if country:
-        country_parts = country["url"].split(continent_geofabrik + "/")
+        country_parts = country["url"].split(f"{continent_geofabrik}/")
 
         # Entire continent selected
         if len(country_parts) < 2:
@@ -168,7 +166,7 @@ def select_osm_file():
             return file
 
         file["url"] = region["url"] + file_suffix
-        file["country_region"] = region["url"].split(country_parts[1] + "/")[1].lower()
+        file["country_region"] = region["url"].split(f"{country_parts[1]}/")[1].lower()
 
         return file
 
@@ -200,9 +198,9 @@ def get_countries_with_population_data(return_country_code=False):
     )
     countries = list(
         map(
-            lambda d: d["location"][0]
-            if not return_country_code
-            else d["country_code"][0],
+            lambda d: d["country_code"][0]
+            if return_country_code
+            else d["location"][0],
             datasets,
         )
     )
@@ -256,10 +254,7 @@ def select_demographic_groups(d: Dataset):
         if "elderly" in name:
             return "elderly_60_plus"
 
-        if "reproductive" in name:
-            return "women_of_reproductive_age_15_49"
-
-        return "total"
+        return "women_of_reproductive_age_15_49" if "reproductive" in name else "total"
 
     resources = list(
         filter(

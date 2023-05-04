@@ -38,7 +38,7 @@ if __name__ == "__main__":
     country_region = args.country_region
     population_density_date = args.population_density_date
 
-    if not (continent and country):
+    if not continent or not country:
         logging.error("Please provide the continent and country as runtime arguments.")
 
         sys.exit(1)
@@ -75,20 +75,18 @@ if __name__ == "__main__":
         database_url = database_url.replace(str(database_port), str(ssh_bind_port))
         database_port = ssh_bind_port
 
-    established_connection = establish_connection_to_db(
+    if established_connection := establish_connection_to_db(
         database_host=database_host,
         database_port=database_port,
         database_name=database_name,
         database_user=database_user,
         database_password=database_password,
-    )
-
-    if not established_connection:
-        logging.error("Couldn't establish connection to database.")
-        sys.exit(1)
-    else:
+    ):
         logging.info("Successfully established connection to database.")
 
+    else:
+        logging.error("Couldn't establish connection to database.")
+        sys.exit(1)
     send_query(
         database_host=database_host,
         database_port=database_port,

@@ -58,11 +58,9 @@ def save_connection(
     data_source_updated_connection = DataSourceConnection(
         id=data_source_id, connection_parameters=connection_parameters.json()
     )
-    data_source = update_connection_parameters(
+    return update_connection_parameters(
         db=db, data_source_updated_connection=data_source_updated_connection
     )
-
-    return data_source
 
 
 @router.get("/{data_source_id}/schema")

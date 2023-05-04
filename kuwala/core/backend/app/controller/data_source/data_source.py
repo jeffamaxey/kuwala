@@ -59,31 +59,28 @@ def test_connection(
     data_source, data_catalog_item_id = get_data_source_and_data_catalog_item_id(
         data_source_id=data_source_id, db=db
     )
-    controller = get_controller(data_catalog_item_id=data_catalog_item_id)
-
-    if controller:
+    if controller := get_controller(data_catalog_item_id=data_catalog_item_id):
         connected = controller.test_connection(
             connection_parameters=connection_parameters
         )
 
-    if not connected:
-        return False
-
-    return True
+    return bool(connected)
 
 
 def get_schema(data_source_id: str, db: Session = Depends(get_db)):
-    schema = None
     data_source, data_catalog_item_id = get_data_source_and_data_catalog_item_id(
         db=db, data_source_id=data_source_id
     )
     connection_parameters = get_connection_parameters(data_source)
-    controller = get_controller(data_catalog_item_id=data_catalog_item_id)
-
-    if controller:
-        schema = controller.get_schema(connection_parameters=connection_parameters)
-
-    return schema
+    return (
+        controller.get_schema(connection_parameters=connection_parameters)
+        if (
+            controller := get_controller(
+                data_catalog_item_id=data_catalog_item_id
+            )
+        )
+        else None
+    )
 
 
 def get_columns(

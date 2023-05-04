@@ -50,7 +50,7 @@ if __name__ == "__main__":
         f"../../../tmp/kuwala/google_trends_files/{continent}/{country}/"
         f'{f"{country_region}/" if country_region else ""}{keyword.lower()}',
     )
-    result_path = result_dir + "/results.csv"
+    result_path = f"{result_dir}/results.csv"
 
     Path(result_dir).mkdir(parents=True, exist_ok=True)
     results.to_csv(result_path, sep=";", index=False)

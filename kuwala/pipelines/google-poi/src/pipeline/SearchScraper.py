@@ -212,7 +212,7 @@ class SearchScraper:
         query_type: str,
         schema=None,
     ):
-        batch = list()
+        batch = []
         batch_size = 100
         max_sleep_time = 120
         writer = None
@@ -262,7 +262,7 @@ class SearchScraper:
                                 "Request timed out too many times. Skipping batch"
                             )
 
-                batch = list()
+                batch = []
 
         if writer:
             writer.close()

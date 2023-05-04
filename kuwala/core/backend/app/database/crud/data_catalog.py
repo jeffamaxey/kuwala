@@ -9,12 +9,12 @@ from ..schemas import data_catalog as schemas
 def get_data_catalog_item(
     db: Session, data_catalog_item_id: str
 ) -> models.DataCatalogItem:
-    data_catalog_item = db.get(models.DataCatalogItem, data_catalog_item_id)
-
-    if not data_catalog_item:
+    if data_catalog_item := db.get(
+        models.DataCatalogItem, data_catalog_item_id
+    ):
+        return data_catalog_item
+    else:
         raise HTTPException(status_code=404, detail="Data catalog item not found")
-
-    return data_catalog_item
 
 
 def get_data_catalog_items(db: Session) -> [models.DataCatalogItem]:

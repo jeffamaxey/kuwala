@@ -64,15 +64,13 @@ def parse_waiting_time_data(waiting_time_data):
     numbers = re.findall(r"\d+", waiting_time_data)
 
     if len(numbers) == 0:
-        waiting_time = 0
+        return 0
     elif "min" in waiting_time_data:
-        waiting_time = int(numbers[0])
+        return int(numbers[0])
     elif "hour" in waiting_time_data:
-        waiting_time = int(numbers[0]) * 60
+        return int(numbers[0]) * 60
     else:
-        waiting_time = int(numbers[0]) * 60 + int(numbers[1])
-
-    return waiting_time
+        return int(numbers[0]) * 60 + int(numbers[1])
 
 
 def parse_popularity_data(popularity_data, timezone):

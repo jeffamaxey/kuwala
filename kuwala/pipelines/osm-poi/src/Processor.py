@@ -50,10 +50,9 @@ class Processor:
 
         @udf(returnType=BooleanType())
         def has_poi_tag(tags):
-            return (
-                len(list(filter((lambda t: t.key in included_tags), tags))) > 0
-                and len(list(filter((lambda t: t.key in excluded_tags), tags))) < 1
-            )
+            return len(
+                list(filter((lambda t: t.key in included_tags), tags))
+            ) > 0 and not list(filter((lambda t: t.key in excluded_tags), tags))
 
         return df.withColumn("is_poi", has_poi_tag(col("tags")))
 
@@ -112,63 +111,63 @@ class Processor:
         relevant_address_tags = Processor.load_resource("relevantAddressTags.json")
 
         @udf(
-            returnType=StructType(
-                [
-                    StructField("house_nr", StringType()),
-                    StructField("street", StringType()),
-                    StructField("zip_code", StringType()),
-                    StructField("city", StringType()),
-                    StructField("country", StringType()),
-                    StructField("full", StringType()),
-                    StructField(
-                        "region",
-                        StructType(
-                            [
-                                StructField(
-                                    "neighborhood", StringType()
-                                ),  # Area within a suburb or quarter
-                                StructField(
-                                    "suburb", StringType()
-                                ),  # An area within commuting distance of a city
-                                StructField(
-                                    "district", StringType()
-                                ),  # Administrative division
-                                StructField(
-                                    "province", StringType()
-                                ),  # Administrative division
-                                StructField(
-                                    "state", StringType()
-                                ),  # Administrative division
-                            ]
+                returnType=StructType(
+                    [
+                        StructField("house_nr", StringType()),
+                        StructField("street", StringType()),
+                        StructField("zip_code", StringType()),
+                        StructField("city", StringType()),
+                        StructField("country", StringType()),
+                        StructField("full", StringType()),
+                        StructField(
+                            "region",
+                            StructType(
+                                [
+                                    StructField(
+                                        "neighborhood", StringType()
+                                    ),  # Area within a suburb or quarter
+                                    StructField(
+                                        "suburb", StringType()
+                                    ),  # An area within commuting distance of a city
+                                    StructField(
+                                        "district", StringType()
+                                    ),  # Administrative division
+                                    StructField(
+                                        "province", StringType()
+                                    ),  # Administrative division
+                                    StructField(
+                                        "state", StringType()
+                                    ),  # Administrative division
+                                ]
+                            ),
                         ),
-                    ),
-                    StructField(
-                        "house_name", StringType()
-                    ),  # Sometimes additionally to or instead of house number
-                    StructField(
-                        "place", StringType()
-                    ),  # Territorial zone (e.g., island, square) instead of street
-                    StructField(
-                        "block", StringType()
-                    ),  # In some countries used instead of house number
-                    StructField(
-                        "details",
-                        StructType(
-                            [
-                                StructField("level", StringType()),
-                                StructField("flats", StringType()),
-                                StructField("unit", StringType()),
-                            ]
+                        StructField(
+                            "house_name", StringType()
+                        ),  # Sometimes additionally to or instead of house number
+                        StructField(
+                            "place", StringType()
+                        ),  # Territorial zone (e.g., island, square) instead of street
+                        StructField(
+                            "block", StringType()
+                        ),  # In some countries used instead of house number
+                        StructField(
+                            "details",
+                            StructType(
+                                [
+                                    StructField("level", StringType()),
+                                    StructField("flats", StringType()),
+                                    StructField("unit", StringType()),
+                                ]
+                            ),
                         ),
-                    ),
-                ]
+                    ]
+                )
             )
-        )
         def parse_tags(is_poi, tags):
             if not is_poi:
                 return
 
-            address = dict(region=dict(), details=dict())
+            address = dict(region={}, details={})
 
             for tag in tags:
                 if tag.key in relevant_address_tags:
@@ -231,7 +230,7 @@ class Processor:
 
     @staticmethod
     def df_parse_tags(file_path, spark, osm_type) -> DataFrame:
-        files = os.listdir(file_path + "/parquet/osm_parquetizer")
+        files = os.listdir(f"{file_path}/parquet/osm_parquetizer")
         file = list(filter(lambda f: (osm_type in f) and ("crc" not in f), files))[0]
         df = spark.read.parquet(f"{file_path}/parquet/osm_parquetizer/{file}")
         df = Processor.is_poi(df)
@@ -406,7 +405,7 @@ class Processor:
         # Combine all data frames
         df_pois = Processor.combine_pois(df_node, df_way, df_relation)
 
-        df_pois.write.mode("overwrite").parquet(file_path + "/parquet/kuwala.parquet")
+        df_pois.write.mode("overwrite").parquet(f"{file_path}/parquet/kuwala.parquet")
 
         end_time = time.time()
 

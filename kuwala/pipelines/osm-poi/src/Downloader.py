@@ -7,11 +7,7 @@ from python_utils.src.FileSelector import select_osm_file
 class Downloader:
     @staticmethod
     def start(args):
-        file = None
-
-        if args.url is None:
-            file = select_osm_file()
-
+        file = select_osm_file() if args.url is None else None
         script_dir = os.path.dirname(__file__)
         file_path = os.path.join(
             script_dir,

@@ -29,29 +29,28 @@ class Downloader:
 
     @staticmethod
     def download_files(dataset: dict, args) -> [str]:
-        if args.continent is not None and args.country is not None:
-            if args.demographic_groups is not None:
-                Configuration.create(
-                    hdx_site="prod", user_agent="Kuwala", hdx_read_only=True
-                )
-                selected_resources = json.loads(args.demographic_groups)
-            else:
-                datasets, countries = get_countries_with_population_data(
-                    return_country_code=True
-                )
-                dataset = datasets[countries.index(args.country)]
-                dataset["continent"] = args.continent
-                dataset["country"] = args.country
-                d = Dataset.read_from_hdx(dataset["id"])
-                selected_resources = select_demographic_groups(d)
-        else:
+        if args.continent is None or args.country is None:
             d = Dataset.read_from_hdx(dataset["id"])
             selected_resources = select_demographic_groups(d)
 
+        elif args.demographic_groups is not None:
+            Configuration.create(
+                hdx_site="prod", user_agent="Kuwala", hdx_read_only=True
+            )
+            selected_resources = json.loads(args.demographic_groups)
+        else:
+            datasets, countries = get_countries_with_population_data(
+                return_country_code=True
+            )
+            dataset = datasets[countries.index(args.country)]
+            dataset["continent"] = args.continent
+            dataset["country"] = args.country
+            d = Dataset.read_from_hdx(dataset["id"])
+            selected_resources = select_demographic_groups(d)
         script_dir = os.path.dirname(__file__)
         dir_path = f'../../../tmp/kuwala/population_files/{dataset["continent"]}/{dataset["country"]}/'
         dir_path = os.path.join(script_dir, dir_path)
-        file_paths = list()
+        file_paths = []
         latest_update_date = None
 
         for r in selected_resources:
@@ -60,11 +59,8 @@ class Downloader:
             file_paths.append(dict(path=dir_path_type, type=r["type"]))
             update_date = r["updated"].replace("-", "_")
 
-            if not latest_update_date:
+            if not latest_update_date or latest_update_date < update_date:
                 latest_update_date = update_date
-            elif latest_update_date < update_date:
-                latest_update_date = update_date
-
             if not os.path.exists(dir_path_type):
                 r_hdx = Resource().read_from_hdx(identifier=r["id"])
                 start_time = time.time()
@@ -79,12 +75,12 @@ class Downloader:
                     zip_ref.extractall(dir_path_type)
 
                 # check the extracted file name as in https://github.com/kuwala-io/kuwala/pull/67#discussion_r774395338
-                csv_file = glob.glob(dir_path_type + "*.csv", recursive=True)[0]
+                csv_file = glob.glob(f"{dir_path_type}*.csv", recursive=True)[0]
                 # assuming there will be only one csv file as extract result
                 file_path_with_update_date = csv_file.split("/")
-                file_path_with_update_date[-1] = (
-                    update_date + "_" + file_path_with_update_date[-1]
-                )
+                file_path_with_update_date[
+                    -1
+                ] = f"{update_date}_{file_path_with_update_date[-1]}"
                 file_path_with_update_date = "/".join(file_path_with_update_date)
                 os.rename(csv_file, file_path_with_update_date)
                 os.remove(file_path_without_ext)

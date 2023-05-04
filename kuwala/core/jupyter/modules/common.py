@@ -33,14 +33,11 @@ def get_spark_session(memory_in_gb):
 
 # Get all the H3 indexes inside a polygon
 def polyfill_polygon(polygon: geojson.Polygon, resolution):
-    # noinspection PyUnresolvedReferences
-    h3_indexes = h3.polyfill(
+    return h3.polyfill(
         dict(type=polygon.type, coordinates=polygon.coordinates),
         resolution,
         geo_json_conformant=True,
     )
-
-    return h3_indexes
 
 
 def add_h3_index_column(df, lat_column, lng_column, resolution):
@@ -66,17 +63,17 @@ def scale_spark_columns(df, columns):
     # Iterating over columns to be scaled
     for i in columns:
         # VectorAssembler Transformation - Converting column to vector type
-        assembler = VectorAssembler(inputCols=[i], outputCol=i + "_vect")
+        assembler = VectorAssembler(inputCols=[i], outputCol=f"{i}_vect")
         # MinMaxScaler Transformation
-        scaler = MinMaxScaler(inputCol=i + "_vect", outputCol=i + "_scaled")
+        scaler = MinMaxScaler(inputCol=f"{i}_vect", outputCol=f"{i}_scaled")
         # Pipeline of VectorAssembler and MinMaxScaler
         pipeline = Pipeline(stages=[assembler, scaler])
         # Fitting pipeline on dataframe
         df = (
             pipeline.fit(df)
             .transform(df)
-            .withColumn(i + "_scaled", unlist(i + "_scaled"))
-            .drop(i + "_vect")
+            .withColumn(f"{i}_scaled", unlist(f"{i}_scaled"))
+            .drop(f"{i}_vect")
         )
 
     return df

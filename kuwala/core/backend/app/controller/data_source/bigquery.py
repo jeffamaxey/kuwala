@@ -67,11 +67,12 @@ def get_columns(
     client = bigquery.Client(credentials=credentials)
     table_ref = f"{project_name}.{dataset_name}.{table_name}"
     table = client.get_table(table=table_ref)
-    columns = list(
-        map(lambda sf: dict(column=sf.name, type=sf.field_type.upper()), table.schema)
+    return list(
+        map(
+            lambda sf: dict(column=sf.name, type=sf.field_type.upper()),
+            table.schema,
+        )
     )
-
-    return columns
 
 
 def get_table_preview(
@@ -108,7 +109,7 @@ def get_table_preview(
         columns = list(map(lambda s: s.name, table.schema))
 
     columns_string = functools.reduce(
-        lambda c1, c2: f"{c1}, {c2}", columns[0:limit_columns]
+        lambda c1, c2: f"{c1}, {c2}", columns[:limit_columns]
     )
     rows_query = f"""
         SELECT {columns_string}
@@ -117,9 +118,5 @@ def get_table_preview(
     """
     query_job = client.query(rows_query)
     rows_iterator = query_job.result()
-    rows = []
-
-    for row in rows_iterator:
-        rows.append(list(row))
-
+    rows = [list(row) for row in rows_iterator]
     return dict(columns=columns, rows=rows)

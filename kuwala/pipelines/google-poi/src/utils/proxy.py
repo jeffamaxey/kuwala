@@ -26,9 +26,8 @@ def check_proxy_connection():
 
         if not r.ok:
             return False
-        else:
-            logging.info("Successfully connected to proxy.")
+        logging.info("Successfully connected to proxy.")
 
-            return True
+        return True
     except ConnectionError:
         return False

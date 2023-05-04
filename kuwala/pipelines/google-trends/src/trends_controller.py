@@ -25,8 +25,8 @@ def get_monthly_trend_for_keywords(
     kw_list = key_words["keyword"].to_list()
     results = pandas.DataFrame(columns=kw_list)
 
+    attempt = 1
     for index, kw in enumerate(kw_list):
-        attempt = 1
         sleep_time = 2
         got_response = False
 
